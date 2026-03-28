@@ -5,7 +5,7 @@
  * Mars terrain mountain silhouette, Konami code Easter egg.
  * @module Section5Surface
  */
-import { memo, useState, useRef, useEffect, useCallback, useMemo, Suspense } from 'react';
+import React, { memo, useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,19 +19,39 @@ const DUST_PARTICLE_COUNT = 30;
 /** Weather update interval in ms */
 const WEATHER_UPDATE_INTERVAL_MS = 5000;
 
-/** Mars terrain mesh with rocks */
+/** Mars terrain mesh with procedural dunes and rocks */
 function MarsTerrain() {
+  const meshRef = useRef();
+
+  useEffect(() => {
+    if (!meshRef.current) return;
+    const geo = meshRef.current.geometry;
+    const pos = geo.attributes.position;
+    // Simple 2D noise displacement for dunes & craters
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      // Layered noise: large dunes + small craters
+      const dune = Math.sin(x * 0.3) * Math.cos(y * 0.2) * 0.6;
+      const crater = Math.sin(x * 1.2 + 0.5) * Math.sin(y * 0.8 + 0.3) * 0.25;
+      const detail = Math.sin(x * 3.1) * Math.cos(y * 2.7) * 0.08;
+      pos.setZ(i, dune + crater + detail);
+    }
+    geo.computeVertexNormals();
+    pos.needsUpdate = true;
+  }, []);
+
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1, 0]}>
-        <planeGeometry args={[30, 30, 32, 32]} />
+      <mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -1, 0]}>
+        <planeGeometry args={[30, 30, 64, 64]} />
         <meshStandardMaterial
           color="#c1440e"
           roughness={0.95}
           metalness={0.05}
         />
       </mesh>
-      {/* Some rocks */}
+      {/* Rocks — varied sizes and positions */}
       {[
         { pos: [-3, -0.7, -2], scale: 0.3 },
         { pos: [4, -0.8, -1], scale: 0.2 },
@@ -39,6 +59,9 @@ function MarsTerrain() {
         { pos: [2, -0.75, -3], scale: 0.25 },
         { pos: [-5, -0.82, 0], scale: 0.22 },
         { pos: [6, -0.78, -2], scale: 0.18 },
+        { pos: [-7, -0.88, -4], scale: 0.12 },
+        { pos: [3, -0.9, 2], scale: 0.1 },
+        { pos: [-2, -0.76, -5], scale: 0.35 },
       ].map((rock, i) => (
         <mesh key={i} position={rock.pos} scale={rock.scale}>
           <dodecahedronGeometry args={[1, 0]} />
@@ -99,7 +122,7 @@ const ModuleIcons = {
 /**
  * Section5Surface — Full Sol 1 surface section.
  */
-function Section5Surface() {
+function Section5Surface({ active, showModal }) {
   const { isMobile } = useDeviceDetect();
   const [weather, setWeather] = useState(generateWeatherReading);
   const [selectedModule, setSelectedModule] = useState(null);
@@ -150,17 +173,17 @@ function Section5Surface() {
     }, 2500);
   }, [message, transmitting]);
 
-  /* Dust particles */
-  const dustParticles = useMemo(() => {
-    return Array.from({ length: DUST_PARTICLE_COUNT }, (_, i) => ({
-      id: i,
-      top: `${10 + Math.random() * 70}%`,
-      animationDuration: `${15 + Math.random() * 25}s`,
-      animationDelay: `${Math.random() * 15}s`,
-      size: `${1 + Math.random() * 2}px`,
-      opacity: 0.15 + Math.random() * 0.2,
-    }));
-  }, []);
+/* Dust particles */
+   const [dustParticles] = useState(() => {
+     return Array.from({ length: DUST_PARTICLE_COUNT }, (_, i) => ({
+       id: i,
+       top: `${10 + Math.random() * 70}%`,
+       animationDuration: `${15 + Math.random() * 25}s`,
+       animationDelay: `${Math.random() * 15}s`,
+       size: `${1 + Math.random() * 2}px`,
+       opacity: 0.15 + Math.random() * 0.2,
+     }));
+   });
 
   const pixelRatio = isMobile ? 1 : Math.min(window.devicePixelRatio, 2);
   const signalInfo = calculateSignalDelay();
@@ -174,17 +197,19 @@ function Section5Surface() {
       {/* Sky gradient */}
       <div className="surface-sky" />
 
-      {/* Three.js terrain */}
+      {/* Three.js terrain — Performance Optimized */}
       <div className="surface-canvas">
-        <Suspense fallback={null}>
-          <Canvas
-            dpr={pixelRatio}
-            camera={{ position: [0, 2, 8], fov: 55 }}
-            style={{ background: 'transparent' }}
-          >
-            <MarsScene />
-          </Canvas>
-        </Suspense>
+        {active && (
+          <React.Suspense fallback={null}>
+            <Canvas
+              dpr={pixelRatio}
+              camera={{ position: [0, 2, 8], fov: 55 }}
+              style={{ background: 'transparent' }}
+            >
+              <MarsScene />
+            </Canvas>
+          </React.Suspense>
+        )}
       </div>
 
       {/* Mars terrain mountain silhouette (SVG overlay) */}
@@ -398,30 +423,42 @@ function Section5Surface() {
         )}
       </AnimatePresence>
 
-      {/* Dancing astronaut Easter egg */}
-      {showEasterEgg && (
-        <div className="dancing-astronaut">
-          <svg width="80" height="120" viewBox="0 0 80 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-            {/* Helmet */}
-            <circle cx="40" cy="25" r="18" fill="var(--chrome)" stroke="var(--star-white)" strokeWidth="1.5" />
-            <circle cx="40" cy="25" r="12" fill="var(--earth-blue)" opacity="0.3" />
-            <path d="M34 22 Q40 28 46 22" stroke="var(--hud-green)" strokeWidth="1" fill="none" />
-            {/* Body */}
-            <rect x="25" y="43" width="30" height="35" rx="8" fill="var(--star-white)" opacity="0.9" />
-            {/* Arms */}
-            <line x1="25" y1="55" x2="10" y2="40" stroke="var(--star-white)" strokeWidth="5" strokeLinecap="round" />
-            <line x1="55" y1="55" x2="70" y2="40" stroke="var(--star-white)" strokeWidth="5" strokeLinecap="round" />
-            {/* Legs */}
-            <line x1="33" y1="78" x2="28" y2="105" stroke="var(--star-white)" strokeWidth="5" strokeLinecap="round" />
-            <line x1="47" y1="78" x2="52" y2="105" stroke="var(--star-white)" strokeWidth="5" strokeLinecap="round" />
-            {/* Boots */}
-            <rect x="22" y="102" width="12" height="8" rx="3" fill="var(--chrome)" />
-            <rect x="46" y="102" width="12" height="8" rx="3" fill="var(--chrome)" />
-            {/* Backpack */}
-            <rect x="28" y="45" width="8" height="20" rx="3" fill="var(--chrome)" opacity="0.5" />
-          </svg>
-        </div>
-      )}
+      {/* Dancing astronaut Easter egg — Premium Animations */}
+      <AnimatePresence>
+        {showEasterEgg && (
+          <motion.div 
+            className="dancing-astronaut-container"
+            initial={{ opacity: 0, scale: 0.5, y: 100 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.5, y: 100 }}
+          >
+            <div className="easter-egg-label typewriter">MISSION SECRET UNLOCKED // DANCE MODE</div>
+            <div className="dancing-astronaut">
+              <svg width="80" height="120" viewBox="0 0 80 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Helmet with reflection */}
+                <circle cx="40" cy="25" r="18" fill="var(--chrome)" stroke="var(--star-white)" strokeWidth="1.5" />
+                <circle cx="40" cy="25" r="12" fill="var(--earth-blue)" opacity="0.3" />
+                <path d="M45 15 Q50 20 45 25" stroke="#fff" strokeWidth="1" opacity="0.5" />
+                {/* Body */}
+                <rect x="25" y="43" width="30" height="35" rx="8" fill="var(--star-white)" opacity="0.9" />
+                {/* Arms with wavy animation from CSS */}
+                <g className="astronaut-arms">
+                  <line x1="25" y1="55" x2="10" y2="40" stroke="var(--star-white)" strokeWidth="5" strokeLinecap="round" />
+                  <line x1="55" y1="55" x2="70" y2="40" stroke="var(--star-white)" strokeWidth="5" strokeLinecap="round" />
+                </g>
+                {/* Legs with tap animation */}
+                <g className="astronaut-legs">
+                  <line x1="33" y1="78" x2="28" y2="105" stroke="var(--star-white)" strokeWidth="5" strokeLinecap="round" />
+                  <line x1="47" y1="78" x2="52" y2="105" stroke="var(--star-white)" strokeWidth="5" strokeLinecap="round" />
+                </g>
+                {/* Boots */}
+                <rect x="22" y="102" width="12" height="8" rx="3" fill="var(--chrome)" />
+                <rect x="46" y="102" width="12" height="8" rx="3" fill="var(--chrome)" />
+              </svg>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

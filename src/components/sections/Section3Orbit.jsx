@@ -2,8 +2,8 @@
  * Section3Orbit — "RED HORIZON" Mars orbit entry.
  * Features: Three.js Mars mesh, orbital HUD, landing zone markers, coordinate tracker.
  */
-import { memo, useState, useRef, useEffect, useCallback, useMemo, Suspense } from 'react';
-import { Canvas, useFrame, useLoader } from '@react-three/fiber';
+import React, { memo, useState, useRef, useEffect, useCallback } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NARRATIVE_TEXT, LANDING_ZONES } from '../../utils/telemetryData';
@@ -12,20 +12,11 @@ import { useDeviceDetect } from '../../hooks/useDeviceDetect';
 const MARS_RADIUS = 2;
 const MARS_ROTATION_SPEED = 0.0008;
 const MARS_AXIAL_TILT = 25.19 * (Math.PI / 180);
-const MARS_TEXTURE_URL = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js/examples/textures/planets/mars_1k_color.jpg';
+const MARS_TEXTURE_URL = '/textures/mars_2k.jpg';
 const ATMOSPHERE_RADIUS = 2.06;
 const STAR_COUNT = 1200;
 
-/** Generate star positions eagerly */
-function generateStarPositions(count) {
-  const arr = new Float32Array(count * 3);
-  for (let i = 0; i < count * 3; i += 3) {
-    arr[i] = (Math.random() - 0.5) * 80;
-    arr[i + 1] = (Math.random() - 0.5) * 80;
-    arr[i + 2] = (Math.random() - 0.5) * 80 - 20;
-  }
-  return arr;
-}
+
 
 /** Rotating Mars mesh with atmosphere shimmer */
 function MarsMesh() {
@@ -33,9 +24,14 @@ function MarsMesh() {
   const [texture, setTexture] = useState(null);
 
   useEffect(() => {
-    new THREE.TextureLoader().load(
+    const loader = new THREE.TextureLoader();
+    loader.setCrossOrigin('anonymous');
+    loader.load(
       MARS_TEXTURE_URL,
-      (tex) => setTexture(tex),
+      (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        setTexture(tex);
+      },
       undefined,
       (err) => console.warn('Mars texture failed to load, falling back to rust color.', err)
     );
@@ -57,13 +53,24 @@ function MarsMesh() {
           <meshStandardMaterial color="#c1440e" roughness={0.9} />
         )}
       </mesh>
-      {/* Atmosphere shimmer */}
+      {/* Atmosphere shimmer — outer */}
       <mesh>
         <sphereGeometry args={[ATMOSPHERE_RADIUS, 32, 32]} />
         <meshBasicMaterial
           color="#c1440e"
           transparent
-          opacity={0.06}
+          opacity={0.14}
+          blending={THREE.AdditiveBlending}
+          side={THREE.BackSide}
+        />
+      </mesh>
+      {/* Atmosphere — inner bright limb */}
+      <mesh>
+        <sphereGeometry args={[2.03, 32, 32]} />
+        <meshBasicMaterial
+          color="#ff7f50"
+          transparent
+          opacity={0.08}
           blending={THREE.AdditiveBlending}
           side={THREE.BackSide}
         />
@@ -72,12 +79,27 @@ function MarsMesh() {
   );
 }
 
-/** Background stars */
+/** Background stars with twinkling */
 function OrbitStars() {
-  const positions = useMemo(() => generateStarPositions(STAR_COUNT), []);
+  const pointsRef = useRef();
+  const [positions] = useState(() => {
+    const arr = new Float32Array(STAR_COUNT * 3);
+    for (let i = 0; i < STAR_COUNT * 3; i += 3) {
+      arr[i] = (Math.random() - 0.5) * 80;
+      arr[i + 1] = (Math.random() - 0.5) * 80;
+      arr[i + 2] = (Math.random() - 0.5) * 80 - 20;
+    }
+    return arr;
+  });
+
+  useFrame((state) => {
+    if (!pointsRef.current) return;
+    const t = state.clock.elapsedTime;
+    pointsRef.current.material.opacity = 0.5 + Math.sin(t * 0.3) * 0.15;
+  });
 
   return (
-    <points>
+    <points ref={pointsRef}>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" count={STAR_COUNT} array={positions} itemSize={3} />
       </bufferGeometry>
@@ -86,7 +108,7 @@ function OrbitStars() {
   );
 }
 
-function Section3Orbit() {
+function Section3Orbit({ active, showModal }) {
   const { isMobile } = useDeviceDetect();
   const sectionRef = useRef(null);
   const [selectedZone, setSelectedZone] = useState(null);
@@ -113,12 +135,19 @@ function Section3Orbit() {
     const y = e.clientY - rect.top;
     const normX = (x / rect.width) * 360 - 180;
     const normY = 90 - (y / rect.height) * 180;
-    setMarsCoords({
-      lat: normY.toFixed(1),
-      lng: normX.toFixed(1),
-      visible: true,
-      x: e.clientX + 20,
-      y: e.clientY - 10,
+    
+    // Throttle React re-renders for cursor coordinates
+    setMarsCoords((prev) => {
+      const dx = Math.abs(e.clientX + 20 - prev.x);
+      const dy = Math.abs(e.clientY - 10 - prev.y);
+      if (dx < 5 && dy < 5 && prev.visible) return prev;
+      return {
+        lat: normY.toFixed(1),
+        lng: normX.toFixed(1),
+        visible: true,
+        x: e.clientX + 20,
+        y: e.clientY - 10,
+      };
     });
   }, []);
 
@@ -137,18 +166,21 @@ function Section3Orbit() {
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Mars canvas */}
+      {/* Mars canvas — Performance Optimized */}
       <div className="orbit-canvas">
-        <Suspense fallback={null}>
-          <Canvas dpr={pixelRatio} camera={{ position: [0, 0, 6], fov: 50 }} style={{ background: 'transparent' }}>
-            <ambientLight intensity={0.4} />
-            <directionalLight position={[5, 2, 5]} intensity={1.8} />
-            <Suspense fallback={null}>
-              <MarsMesh />
-            </Suspense>
-            <OrbitStars />
-          </Canvas>
-        </Suspense>
+        {active && (
+          <React.Suspense fallback={null}>
+            <Canvas dpr={pixelRatio} camera={{ position: [0, 0, 6], fov: 50 }} style={{ background: 'transparent' }}>
+              <ambientLight intensity={0.5} />
+              <directionalLight position={[5, 2, 5]} intensity={2.8} />
+              <pointLight position={[-3, 1, 3]} intensity={0.6} color="#e8813a" />
+              <React.Suspense fallback={null}>
+                <MarsMesh />
+              </React.Suspense>
+              <OrbitStars />
+            </Canvas>
+          </React.Suspense>
+        )}
       </div>
 
       {/* Orbital path SVG */}

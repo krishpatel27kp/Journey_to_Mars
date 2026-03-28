@@ -13,9 +13,9 @@ export function useDeviceDetect() {
       const width = window.innerWidth;
       setIsMobile(width <= 768);
       setIsTablet(width > 768 && width <= 1024);
+      setIsTouch('ontouchstart' in window || navigator.maxTouchPoints > 0);
     };
 
-    setIsTouch('ontouchstart' in window || navigator.maxTouchPoints > 0);
     checkDevice();
 
     window.addEventListener('resize', checkDevice);

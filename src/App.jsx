@@ -12,6 +12,8 @@ import ProgressBar from './components/ui/ProgressBar';
 import HUDLabel from './components/ui/HUDLabel';
 import CustomCursor from './components/ui/CustomCursor';
 import MissionModal from './components/ui/MissionModal';
+import ErrorBoundary from './components/ui/ErrorBoundary';
+import SectionLoader from './components/ui/SectionLoader';
 import { SECTION_NAMES } from './utils/telemetryData';
 
 import './styles/global.css';
@@ -32,48 +34,6 @@ const prefersReducedMotion =
   typeof window !== 'undefined' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/** Loading fallback */
-function SectionLoader() {
-  return (
-    <div style={{
-      width: '100%',
-      height: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'var(--void)',
-      fontFamily: 'var(--font-display)',
-      fontSize: '12px',
-      color: 'var(--hud-green)',
-      letterSpacing: '0.2em',
-    }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ marginBottom: '16px', opacity: 0.6 }}>LOADING MISSION DATA</div>
-        <div style={{
-          width: '120px',
-          height: '2px',
-          background: 'var(--deep)',
-          margin: '0 auto',
-          borderRadius: '2px',
-          overflow: 'hidden',
-        }}>
-          <div style={{
-            width: '40%',
-            height: '100%',
-            background: 'var(--hud-green)',
-            animation: 'loading-bar 1.5s ease-in-out infinite',
-          }} />
-        </div>
-      </div>
-      <style>{`
-        @keyframes loading-bar {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(350%); }
-        }
-      `}</style>
-    </div>
-  );
-}
 
 function App() {
   const [showModal, setShowModal] = useState(true);
@@ -191,21 +151,31 @@ function App() {
 
       {/* Sections */}
       <main>
-        <Suspense fallback={<SectionLoader />}>
-          <Section1Launch />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <Section2Void />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <Section3Orbit />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <Section4EDL />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <Section5Surface />
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<SectionLoader />}>
+            <Section1Launch active={currentSection === 0} showModal={showModal} />
+          </Suspense>
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <Suspense fallback={<SectionLoader />}>
+            <Section2Void active={currentSection === 1 || currentSection === 0} showModal={showModal} />
+          </Suspense>
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <Suspense fallback={<SectionLoader />}>
+            <Section3Orbit active={currentSection === 2 || currentSection === 1} showModal={showModal} />
+          </Suspense>
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <Suspense fallback={<SectionLoader />}>
+            <Section4EDL active={currentSection === 3 || currentSection === 2} showModal={showModal} />
+          </Suspense>
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <Suspense fallback={<SectionLoader />}>
+            <Section5Surface active={currentSection === 4 || currentSection === 3} showModal={showModal} />
+          </Suspense>
+        </ErrorBoundary>
       </main>
     </div>
   );

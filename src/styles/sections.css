@@ -2,22 +2,20 @@
    ARES-1 Mission — Section Styles
    ============================================ */
 
-/* === SECTION 1 — T-MINUS ZERO === */
 .section-launch {
   position: relative;
-  height: 100vh;
-  display: flex;
-  align-items: center;
+  height: 300vh;
   background: var(--void);
-  overflow: hidden;
+  border: none;
 }
 
 .launch-content {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: var(--z-content);
   display: flex;
   width: 100%;
-  height: 100%;
+  height: 100vh;
   align-items: center;
   padding: 0 var(--space-xl);
 }
@@ -107,11 +105,38 @@
 
 .launch-canvas {
   position: absolute;
-  right: 0;
-  top: 0;
-  width: 60%;
+  inset: 0;
+  width: 100%;
   height: 100%;
   z-index: var(--z-canvas);
+}
+
+/* Scroll hint */
+.scroll-hint {
+  position: fixed;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-hud);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.scroll-hint-text {
+  font-family: var(--font-display);
+  font-size: 10px;
+  color: var(--hud-green);
+  letter-spacing: 0.25em;
+  opacity: 0.7;
+}
+.scroll-hint-chevron {
+  animation: scroll-bounce 1.8s ease-in-out infinite;
+}
+@keyframes scroll-bounce {
+  0%, 100% { transform: translateY(0); opacity: 0.4; }
+  50% { transform: translateY(8px); opacity: 1; }
 }
 
 /* Rocket SVG in Section 1 */
@@ -121,23 +146,45 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 5;
-  transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.8s ease;
-  filter: drop-shadow(0 0 8px rgba(255, 107, 53, 0.4));
+  transition: transform 2s cubic-bezier(0.5, 0, 0.2, 1),
+              opacity 1.5s ease 0.5s;
+  filter: drop-shadow(0 0 12px rgba(255, 107, 53, 0.8));
 }
 .rocket-launch-svg.launched {
-  transform: translateX(-50%) translateY(-800px);
+  transform: translateX(-50%) translateY(-1000px) scale(0.6);
   opacity: 0;
 }
 .rocket-exhaust {
   opacity: 0.9;
 }
 .rocket-launch-svg:not(.launched) .rocket-exhaust {
-  animation: exhaust-pulse 0.15s ease-in-out infinite alternate;
+  animation: exhaust-idle 0.15s ease-in-out infinite alternate;
 }
-@keyframes exhaust-pulse {
-  from { opacity: 0.7; }
-  to { opacity: 1; }
+.rocket-launch-svg.launched .rocket-exhaust {
+  animation: exhaust-surge 0.1s ease-in-out infinite alternate;
+  fill: #fff !important;
+  stroke: #ff9900 !important;
+}
+
+@keyframes exhaust-idle {
+  from { opacity: 0.7; transform: scaleY(0.9); }
+  to { opacity: 1; transform: scaleY(1.1); }
+}
+@keyframes exhaust-surge {
+  from { opacity: 0.8; transform: scaleY(1.5) scaleX(1.1); }
+  to { opacity: 1; transform: scaleY(3.0) scaleX(1.4); }
+}
+
+/* Epic Launch Camera Shake */
+.camera-shake {
+  animation: intense-shake 0.4s ease-in-out infinite alternate;
+}
+@keyframes intense-shake {
+  0% { transform: translate(1px, 1px) rotate(0deg); }
+  25% { transform: translate(-2px, -1px) rotate(-0.5deg); }
+  50% { transform: translate(1px, 2px) rotate(0.5deg); }
+  75% { transform: translate(-1px, -2px) rotate("-0.5deg"); }
+  100% { transform: translate(2px, -1px) rotate(0deg); }
 }
 
 .launch-telemetry {
@@ -240,15 +287,28 @@
 /* === SECTION 2 — THE VOID === */
 .section-void {
   position: relative;
+  /* height defined by ScrollTrigger pin length */
+  background: #03050a;
+}
+
+.void-scene {
+  position: relative;
+  width: 100%;
   height: 100vh;
-  background: var(--void);
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .void-canvas {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
   z-index: var(--z-canvas);
+  background: radial-gradient(circle at center, #0a0e17 0%, #03050a 100%);
 }
 
 .spacecraft-container {
@@ -256,9 +316,25 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: var(--z-content);
-  width: 120px;
-  height: 200px;
+  z-index: 100;
+  width: 160px;
+  height: 320px;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spacecraft-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.1));
+}
+
+@keyframes ship-float {
+  0% { transform: translate(-50%, -50%) translateY(0) rotate(-1.5deg); }
+  50% { transform: translate(-50%, -50%) translateY(-12px) rotate(1.5deg); }
+  100% { transform: translate(-50%, -50%) translateY(0) rotate(-1.5deg); }
 }
 
 .spacecraft-svg {
@@ -282,6 +358,27 @@
 @keyframes thruster-pulse {
   0%, 100% { opacity: 0.3; transform: translateX(-50%) scale(0.8); }
   50% { opacity: 0.8; transform: translateX(-50%) scale(1.2); }
+}
+
+/* Landing state enhancements */
+.spacecraft-container.approaching-mars {
+  animation: ship-shake 0.1s ease-in-out infinite;
+}
+
+@keyframes ship-shake {
+  0% { transform: translate(-50.5%, -50%) rotate(-1.5deg); }
+  50% { transform: translate(-49.5%, -50.5%) rotate(1.5deg); }
+  100% { transform: translate(-50%, -49.5%) rotate(-1deg); }
+}
+
+.entry-glow {
+  filter: blur(4px);
+  animation: heat-flicker 0.1s linear infinite;
+}
+
+@keyframes heat-flicker {
+  0%, 100% { opacity: 0.8; stroke-width: 4; }
+  50% { opacity: 1; stroke-width: 7; }
 }
 
 .void-milestones {
@@ -352,12 +449,60 @@
   transform: translateY(0);
 }
 
-.void-distance {
+.void-hud-panel {
   position: absolute;
-  bottom: var(--space-xl);
+  z-index: 110;
+  padding: var(--space-lg);
+  background: rgba(10, 14, 23, 0.7); /* Darker for readability */
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--hud-green);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.15);
+  pointer-events: none;
+}
+
+.void-hud-panel.left {
+  top: 10%;
+  left: var(--space-xl);
+  max-width: 320px;
+}
+
+.void-hud-panel.right {
+  bottom: 15%; /* Higher to avoid global mission bar */
   right: var(--space-xl);
-  z-index: var(--z-content);
-  text-align: right;
+  min-width: 300px;
+}
+
+.hud-corner-bracket {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--hud-green);
+}
+
+.top-left { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+.top-right { top: -2px; right: -2px; border-left: none; border-bottom: none; }
+.bottom-left { bottom: -2px; left: -2px; border-right: none; border-top: none; }
+.bottom-right { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+
+.hud-label-small {
+  font-family: var(--font-display);
+  font-size: 9px;
+  color: var(--hud-green);
+  letter-spacing: 0.2em;
+  margin-bottom: var(--space-sm);
+  opacity: 0.8;
+}
+
+.void-narrative h2 {
+  font-size: 1.5rem;
+  color: var(--star-white);
+  margin-bottom: var(--space-sm);
+}
+
+.void-narrative p {
+  font-size: 14px;
+  color: var(--star-white-85);
+  line-height: 1.6;
 }
 
 .void-distance-label {
@@ -365,45 +510,91 @@
   font-size: 10px;
   color: var(--hud-green);
   letter-spacing: 0.15em;
-  opacity: 0.7;
   margin-bottom: var(--space-xs);
 }
 
 .void-distance-value {
   font-family: var(--font-display);
-  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  font-size: 2rem;
   color: var(--star-white);
-  letter-spacing: 0.1em;
-  font-weight: 600;
+  font-weight: 700;
+  margin-bottom: var(--space-sm);
 }
 
-.void-distance-unit {
-  font-family: var(--font-display);
-  font-size: 12px;
-  color: var(--chrome);
-  letter-spacing: 0.1em;
-}
-
-.void-narrative {
-  position: absolute;
-  left: var(--space-xl);
-  top: var(--space-xl);
-  z-index: var(--z-content);
-  max-width: 350px;
-}
-
-.void-narrative h2 {
-  font-size: clamp(1.2rem, 2vw, 1.8rem);
-  margin-bottom: var(--space-md);
-}
-
-
-/* === SECTION 3 — RED HORIZON === */
-.section-orbit {
-  position: relative;
-  height: 100vh;
-  background: var(--void);
+.hud-progress-bar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
   overflow: hidden;
+}
+
+.hud-progress-fill {
+  height: 100%;
+  background: var(--hud-green);
+  box-shadow: 0 0 10px var(--hud-green);
+  transition: width 0.3s ease-out;
+}
+
+.void-milestones {
+  position: absolute;
+  top: 50%;
+  right: var(--space-xl);
+  transform: translateY(-50%);
+  z-index: 105;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  width: 320px;
+}
+
+.milestone-card {
+  position: relative;
+  background: rgba(0, 255, 136, 0.03);
+  border: 1px solid rgba(0, 255, 136, 0.15);
+  padding: var(--space-lg);
+  backdrop-filter: blur(4px);
+  transition: all 0.8s cubic-bezier(0.2, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.milestone-card.revealed::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--hud-green);
+  box-shadow: 0 0 15px var(--hud-green);
+  animation: hologram-scan 4s linear infinite;
+}
+
+@keyframes hologram-scan {
+  0% { transform: translateY(-10px); }
+  100% { transform: translateY(200px); }
+}
+
+.hologram-flicker {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 255, 136, 0.05);
+  opacity: 0;
+  pointer-events: none;
+  animation: flicker 0.15s infinite;
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.1; }
+}
+
+
+/* === SECTION 2 — THE VOID === */
+.section-void {
+  position: relative;
+  height: 400vh;
+  background: var(--void);
+  border: none;
 }
 
 .orbit-canvas {
@@ -530,9 +721,10 @@
 /* === SECTION 4 — 7 MINUTES OF TERROR === */
 .section-edl {
   position: relative;
-  height: 100vh;
+  min-height: 100vh;
+  height: auto;
   background: var(--deep);
-  overflow: hidden;
+  padding: var(--space-xl) 0;
 }
 
 .edl-background {
@@ -563,18 +755,18 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: var(--space-xl);
+  justify-content: center; /* Back to centered now that it fits */
+  padding: var(--space-md);
 }
 
 .edl-header {
   text-align: center;
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-md);
 }
 
 .edl-header h2 {
-  font-size: clamp(1.4rem, 3vw, 2.2rem);
-  margin-bottom: var(--space-sm);
+  font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+  margin-bottom: 4px;
 }
 
 .edl-subtitle {
@@ -590,10 +782,10 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin: 0 auto var(--space-lg);
-  max-width: 500px;
+  margin: 0 auto var(--space-md);
+  max-width: 460px;
   width: 100%;
-  padding: 0 6px;
+  padding: 0 4px;
 }
 
 .stepper-track {
@@ -678,17 +870,18 @@
 /* Phase data line */
 .edl-phase-data-line {
   text-align: center;
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-sm);
   font-size: 10px;
   opacity: 0.7;
-  min-height: 16px;
+  min-height: 14px;
 }
 
 .edl-phase-container {
   width: 100%;
-  max-width: 700px;
-  min-height: 360px;
+  max-width: 660px;
+  min-height: 420px;
   position: relative;
+  margin: var(--space-sm) 0;
 }
 
 .edl-phase {
@@ -702,8 +895,8 @@
 
 .edl-card {
   width: 100%;
-  max-width: 600px;
-  min-height: 320px;
+  max-width: 580px;
+  height: 400px;
   position: relative;
   transform-style: preserve-3d;
   transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
@@ -719,12 +912,12 @@
   inset: 0;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  padding: var(--space-xl);
+  padding: var(--space-lg);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-md);
+  justify-content: flex-start;
+  gap: var(--space-sm);
 }
 
 .edl-card-front {
@@ -741,9 +934,9 @@
 }
 
 .edl-phase-svg {
-  width: 200px;
-  height: 120px;
-  margin-bottom: var(--space-sm);
+  width: 160px;
+  height: 100px;
+  margin-bottom: 0;
 }
 
 .edl-phase-title {
@@ -758,28 +951,59 @@
   font-size: 11px;
   color: var(--hud-green);
   letter-spacing: 0.1em;
-  line-height: 1.8;
+  line-height: 1.6;
+  max-height: 180px; /* Limit height to fit card */
+  overflow-y: auto;
+  width: 100%;
 }
 
 .edl-phase-desc {
-  max-width: 400px;
-}
-
-.edl-card-toggle {
-  margin-top: var(--space-md);
-  font-size: 10px;
-  padding: var(--space-sm) var(--space-md);
+  max-width: 440px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: var(--space-sm);
 }
 
 .edl-nav {
   display: flex;
-  gap: var(--space-md);
+  gap: var(--space-xl);
   margin-top: var(--space-lg);
+  padding: var(--space-md);
+  border-top: 1px solid var(--hud-dim);
 }
 
 .edl-nav button {
-  padding: var(--space-sm) var(--space-lg);
+  padding: var(--space-sm) var(--space-xl);
   font-size: 11px;
+  background: var(--deep-80);
+  border: 1px solid var(--hud-dim);
+  color: var(--chrome);
+  clip-path: polygon(0 8px, 8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+  transition: all 0.3s;
+}
+
+.edl-nav button:hover:not(:disabled) {
+  border-color: var(--hud-green);
+  color: var(--hud-green);
+  background: var(--hud-green-20);
+}
+
+.edl-card-toggle {
+  margin-top: auto; /* Push to bottom of card */
+  font-size: 11px;
+  padding: var(--space-sm) var(--space-xl);
+  background: transparent;
+  border: 1px solid var(--hud-green);
+  color: var(--hud-green);
+  clip-path: polygon(0 8px, 8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.edl-card-toggle:hover {
+  background: var(--hud-green);
+  color: var(--deep);
 }
 
 
@@ -1124,8 +1348,10 @@
 .mission-modal {
   max-width: 600px;
   width: 90%;
-  padding: var(--space-2xl) var(--space-xl);
+  padding: var(--space-xl) var(--space-lg);
   text-align: center;
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
 .mission-modal h2 {
@@ -1383,4 +1609,53 @@
     width: 100%;
     height: 50vh;
   }
+}
+
+
+/* Easter Egg Animations */
+.dancing-astronaut-container {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.easter-egg-label {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--hud-green);
+  background: rgba(0, 0, 0, 0.8);
+  padding: 8px 16px;
+  border: 1px solid var(--hud-dim);
+  box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+}
+
+.dancing-astronaut {
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+}
+
+.astronaut-arms {
+  transform-origin: 40px 50px;
+  animation: wave 1s ease-in-out infinite alternate;
+}
+
+@keyframes wave {
+  0% { transform: rotate(-10deg); }
+  100% { transform: rotate(10deg); }
+}
+
+.astronaut-legs {
+  transform-origin: 40px 80px;
+  animation: kick 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes kick {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-5px); }
 }

@@ -1,0 +1,98 @@
+/** SectionLoader Styles — HUD & Scanning Effects */
+.section-loader {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--void);
+  font-family: var(--font-display);
+  color: var(--hud-green);
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  z-index: 1000;
+}
+
+.loader-scanning-line {
+  position: absolute;
+  top: -10%;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--hud-green);
+  opacity: 0.3;
+  box-shadow: 0 0 15px var(--hud-green);
+  animation: scan-vertical 3s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes scan-vertical {
+  from { top: -10%; }
+  to { top: 110%; }
+}
+
+.loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  text-align: center;
+}
+
+.loader-hud-label {
+  font-size: 10px;
+  opacity: 0.6;
+  border: 1px solid var(--hud-dim);
+  padding: 4px 12px;
+}
+
+.loader-message {
+  font-size: 14px;
+  min-height: 1em;
+  color: #fff;
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4));
+}
+
+.loader-progress-bar {
+  width: 240px;
+  height: 2px;
+  background: var(--hud-dim);
+  position: relative;
+}
+
+.loader-progress-fill {
+  position: absolute;
+  height: 100%;
+  width: 0%;
+  background: var(--hud-green);
+  animation: progress-pulse 8s ease-in-out infinite;
+  box-shadow: 0 0 10px var(--hud-green);
+}
+
+@keyframes progress-pulse {
+  0% { width: 0%; }
+  30% { width: 45%; }
+  60% { width: 70%; }
+  90% { width: 95%; }
+  100% { width: 100%; }
+}
+
+.loader-telemetry-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  font-size: 9px;
+  opacity: 0.4;
+  margin-top: 10px;
+}
+
+/* Flicker effect */
+.section-loader::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, transparent 70%, rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+}

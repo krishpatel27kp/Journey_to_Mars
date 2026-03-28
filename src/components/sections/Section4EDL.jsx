@@ -5,8 +5,10 @@
  * phase-specific data line.
  * @module Section4EDL
  */
-import { memo, useState, useCallback, useMemo } from 'react';
+import React, { memo, useState, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Canvas, useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
 import { NARRATIVE_TEXT, EDL_PHASES } from '../../utils/telemetryData';
 
 /** Total number of EDL phases */
@@ -27,11 +29,9 @@ const PHASE_DATA = [
 function HeatshieldSVG() {
   return (
     <svg viewBox="0 0 200 120" className="edl-phase-svg" xmlns="http://www.w3.org/2000/svg">
-      {/* Heatshield dome */}
       <ellipse cx="100" cy="80" rx="70" ry="20" fill="#c1440e" opacity="0.3" />
       <path d="M30,80 Q100,10 170,80 Z" fill="#c1440e" opacity="0.7" />
       <path d="M30,80 Q100,10 170,80 Z" fill="none" stroke="#e8813a" strokeWidth="2" />
-      {/* Plasma glow lines */}
       <path d="M25,85 Q60,30 100,20" fill="none" stroke="#ff6b35" strokeWidth="1.5" opacity="0.8">
         <animate attributeName="opacity" values="0.8;0.3;0.8" dur="1.2s" repeatCount="indefinite" />
       </path>
@@ -41,7 +41,6 @@ function HeatshieldSVG() {
       <path d="M50,78 Q100,25 150,78" fill="none" stroke="#ffaa44" strokeWidth="1" opacity="0.6">
         <animate attributeName="opacity" values="0.6;0.2;0.6" dur="0.8s" repeatCount="indefinite" />
       </path>
-      {/* Capsule body */}
       <ellipse cx="100" cy="70" rx="18" ry="8" fill="#8ca0b8" />
       <rect x="88" y="58" width="24" height="14" rx="4" fill="#8ca0b8" />
     </svg>
@@ -52,16 +51,12 @@ function HeatshieldSVG() {
 function ParachuteSVG() {
   return (
     <svg viewBox="0 0 200 140" className="edl-phase-svg parachute-swing" xmlns="http://www.w3.org/2000/svg">
-      {/* Parachute dome */}
       <path d="M60,70 Q100,10 140,70 Z" fill="#1a6eb5" opacity="0.6" />
       <path d="M60,70 Q100,10 140,70 Z" fill="none" stroke="#4a9ede" strokeWidth="1.5" />
-      {/* Suspension lines */}
       <line x1="75" y1="68" x2="95" y2="105" stroke="#8ca0b8" strokeWidth="0.8" />
       <line x1="100" y1="66" x2="100" y2="105" stroke="#8ca0b8" strokeWidth="0.8" />
       <line x1="125" y1="68" x2="105" y2="105" stroke="#8ca0b8" strokeWidth="0.8" />
-      {/* Capsule */}
       <rect x="88" y="105" width="24" height="16" rx="4" fill="#8ca0b8" />
-      {/* Canopy panels */}
       <path d="M60,70 Q80,40 100,38" fill="none" stroke="#ffffff" strokeWidth="0.5" opacity="0.4" />
       <path d="M140,70 Q120,40 100,38" fill="none" stroke="#ffffff" strokeWidth="0.5" opacity="0.4" />
     </svg>
@@ -72,20 +67,16 @@ function ParachuteSVG() {
 function RocketSVG() {
   return (
     <svg viewBox="0 0 200 140" className="edl-phase-svg" xmlns="http://www.w3.org/2000/svg">
-      {/* Rocket body */}
       <rect x="82" y="20" width="36" height="60" rx="6" fill="#8ca0b8" />
       <polygon points="100,10 82,30 118,30" fill="#8ca0b8" />
-      {/* Engine nozzles */}
       <polygon points="86,80 82,95 92,95 90,80" fill="#555" />
       <polygon points="114,80 118,95 108,95 110,80" fill="#555" />
-      {/* Animated flames */}
       <g className="flame-anim">
         <path d="M84,95 Q87,115 90,108 Q93,120 96,112 Q99,125 100,118" fill="none"
           stroke="#ff6b35" strokeWidth="3" strokeLinecap="round" />
         <path d="M116,95 Q113,115 110,108 Q107,120 104,112 Q101,125 100,118" fill="none"
           stroke="#e8813a" strokeWidth="3" strokeLinecap="round" />
       </g>
-      {/* Ground surface */}
       <rect x="20" y="128" width="160" height="4" rx="2" fill="#c1440e" opacity="0.6" />
     </svg>
   );
@@ -95,28 +86,18 @@ function RocketSVG() {
 function SkyCraneSVG() {
   return (
     <svg viewBox="0 0 200 150" className="edl-phase-svg" xmlns="http://www.w3.org/2000/svg">
-      {/* Descent stage body (top) */}
       <rect x="60" y="15" width="80" height="30" rx="4" fill="#8ca0b8" />
-      {/* Rocket nozzles */}
       <rect x="67" y="45" width="10" height="14" rx="2" fill="#555" />
       <rect x="123" y="45" width="10" height="14" rx="2" fill="#555" />
-      {/* Bridle cables */}
-      <line x1="80" y1="59" x2="75" y2="99" stroke="#8ca0b8" strokeWidth="1.2"
-        strokeDasharray="3 2" />
-      <line x1="120" y1="59" x2="125" y2="99" stroke="#8ca0b8" strokeWidth="1.2"
-        strokeDasharray="3 2" />
-      <line x1="100" y1="45" x2="100" y2="99" stroke="#8ca0b8" strokeWidth="1.2"
-        strokeDasharray="3 2" />
-      {/* Rover body (bottom) */}
+      <line x1="80" y1="59" x2="75" y2="99" stroke="#8ca0b8" strokeWidth="1.2" strokeDasharray="3 2" />
+      <line x1="120" y1="59" x2="125" y2="99" stroke="#8ca0b8" strokeWidth="1.2" strokeDasharray="3 2" />
+      <line x1="100" y1="45" x2="100" y2="99" stroke="#8ca0b8" strokeWidth="1.2" strokeDasharray="3 2" />
       <rect x="68" y="99" width="64" height="30" rx="4" fill="#8ca0b8" />
-      {/* Rover wheels */}
       <circle cx="76" cy="133" r="7" fill="none" stroke="#8ca0b8" strokeWidth="2" />
       <circle cx="100" cy="133" r="7" fill="none" stroke="#8ca0b8" strokeWidth="2" />
       <circle cx="124" cy="133" r="7" fill="none" stroke="#8ca0b8" strokeWidth="2" />
-      {/* Mast/camera */}
       <line x1="100" y1="99" x2="100" y2="83" stroke="#8ca0b8" strokeWidth="1.5" />
       <circle cx="100" cy="82" r="4" fill="#4a9ede" />
-      {/* Small flame wisps */}
       <g className="flame-anim">
         <path d="M69,59 Q72,72 75,59" fill="none" stroke="#e8813a" strokeWidth="2" opacity="0.7" />
         <path d="M125,59 Q128,72 131,59" fill="none" stroke="#e8813a" strokeWidth="2" opacity="0.7" />
@@ -127,10 +108,41 @@ function SkyCraneSVG() {
 
 const PHASE_SVGS = [HeatshieldSVG, ParachuteSVG, RocketSVG, SkyCraneSVG];
 
+/** Atmospheric ionization particles for EDL background */
+function PlasmaParticles({ count = 100 }) {
+  const pointsRef = useRef();
+  const positions = useMemo(() => {
+    const arr = new Float32Array(count * 3);
+    for (let i = 0; i < count * 3; i += 3) {
+      arr[i] = (Math.random() - 0.5) * 10;
+      arr[i + 1] = (Math.random() - 0.5) * 20;
+      arr[i + 2] = (Math.random() - 0.5) * 10 - 5;
+    }
+    return arr;
+  }, [count]);
+
+  useFrame((state) => {
+    if (!pointsRef.current) return;
+    const t = state.clock.elapsedTime;
+    pointsRef.current.position.y -= 0.05;
+    if (pointsRef.current.position.y < -5) pointsRef.current.position.y = 5;
+    pointsRef.current.rotation.z += 0.001;
+  });
+
+  return (
+    <points ref={pointsRef}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" count={count} array={positions} itemSize={3} />
+      </bufferGeometry>
+      <pointsMaterial color="#ff6b35" size={0.05} transparent opacity={0.3} sizeAttenuation />
+    </points>
+  );
+}
+
 /**
  * Section4EDL — Full EDL interactive section.
  */
-function Section4EDL() {
+function Section4EDL({ active, showModal }) {
   const [activePhase, setActivePhase] = useState(0);
   const [direction, setDirection] = useState(1);
   const [flippedCards, setFlippedCards] = useState({});
@@ -156,16 +168,16 @@ function Section4EDL() {
   const phase = EDL_PHASES[activePhase];
   const PhaseSVG = PHASE_SVGS[activePhase];
 
-  /* Create entry streaks */
-  const streaks = useMemo(() => {
-    return Array.from({ length: ENTRY_STREAK_COUNT }, (_, i) => ({
-      left: `${Math.random() * 100}%`,
-      height: `${30 + Math.random() * 60}vh`,
-      animationDuration: `${2 + Math.random() * 4}s`,
-      animationDelay: `${Math.random() * 3}s`,
-      opacity: 0.05 + Math.random() * 0.1,
-    }));
-  }, []);
+/* Create entry streaks */
+   const [streaks] = useState(() => {
+     return Array.from({ length: ENTRY_STREAK_COUNT }, () => ({
+       left: `${Math.random() * 100}%`,
+       height: `${30 + Math.random() * 60}vh`,
+       animationDuration: `${2 + Math.random() * 4}s`,
+       animationDelay: `${Math.random() * 3}s`,
+       opacity: 0.05 + Math.random() * 0.1,
+     }));
+   });
 
   return (
     <section
@@ -173,8 +185,15 @@ function Section4EDL() {
       id="section-edl"
       aria-label="7 Minutes of Terror — Entry, Descent, Landing"
     >
-      {/* Re-entry streaks background */}
-      <div className="edl-background">
+      {/* Re-entry streaks and 3D plasma particles — Performance Optimized */}
+      <div className="edl-background" style={{ pointerEvents: 'none' }}>
+        {active && (
+          <React.Suspense fallback={null}>
+            <Canvas camera={{ position: [0, 0, 5], fov: 75 }} style={{ position: 'absolute', inset: 0 }}>
+              <PlasmaParticles />
+            </Canvas>
+          </React.Suspense>
+        )}
         {streaks.map((s, i) => (
           <div
             key={i}
@@ -201,9 +220,7 @@ function Section4EDL() {
         {/* Phase stepper bar with labels and progress line */}
         <div className="phase-stepper" role="tablist" aria-label="EDL phases">
           <div className="stepper-track">
-            {/* Background track line */}
             <div className="stepper-track-bg" />
-            {/* Active progress line */}
             <div
               className="stepper-track-fill"
               style={{ width: `${(activePhase / (PHASE_COUNT - 1)) * 100}%` }}
@@ -225,7 +242,7 @@ function Section4EDL() {
           ))}
         </div>
 
-        {/* Phase data line (replaces incorrect coordinate display) */}
+        {/* Phase data line */}
         <div className="edl-phase-data-line hud-text">
           {PHASE_DATA[activePhase]}
         </div>

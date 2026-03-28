@@ -89,7 +89,7 @@ function MissionModal({ onDismiss }) {
               className="launch-button"
               onClick={onDismiss}
               aria-label="Acknowledge mission briefing and proceed"
-              style={{ opacity: isComplete ? 1 : 0.4, pointerEvents: isComplete ? 'all' : 'none' }}
+              style={{ opacity: isComplete ? 1 : 0.8 }}
             >
               ACKNOWLEDGE
             </button>

@@ -171,7 +171,7 @@ export const EDL_PHASES = [
 
 export const NARRATIVE_TEXT = {
   section1: 'The air smells of kerosene and ambition. Six humans stand at the threshold of the longest journey in history. In 253 days, if the math holds, we will breathe the thin cold air of another world.',
-  section2: 'There is nothing out here. No sound. No resistance. The Sun is just a slightly brighter star. We sleep in shifts and dream of red deserts.',
+  section2: 'Deep space is silent, but Mars is loud. The Red Planet looms in the viewport, growing from a speck to a world of rust and shadow. We are no longer drifting — we are falling. At 21,000 km/h, the landing sequence begins. Brace for impact.',
   section3: 'There it is. Rust and silence. From orbit it looks patient, like it has been waiting. The atmosphere is thin — 1% of Earth\'s. But it is enough.',
   section4: 'Seven minutes. That is all the time we have to go from orbital velocity to a soft landing. Mission control will know if we succeeded or failed 12 minutes after it happens. We land alone.',
   section5: 'Sol 1. The sun rises in the east, smaller than home, cold and pale. The ground crunches underfoot. This is where we start.',

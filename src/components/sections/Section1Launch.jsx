@@ -18,95 +18,136 @@ const COUNTDOWN_START = 10;
 const EARTH_RADIUS = 2;
 /** Rotation speed (radians per frame) */
 const EARTH_ROTATION_SPEED = 0.001;
-/** Earth texture URL — Blue Marble via three.js examples */
-const EARTH_TEXTURE_URL = 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg';
+/** Earth texture — Local asset (no network dependency) */
+const EARTH_TEXTURE_URL = '/textures/earth_2k.jpg';
+const EARTH_NIGHT_TEXTURE_URL = '/textures/earth_night_2k.png';
 /** Background star count */
 const STAR_COUNT = 1500;
 /** Atmosphere glowing shell radius (slightly larger than Earth) */
-const ATMOS_RADIUS = 2.12;
+const ATMOS_RADIUS = 2.05;
 
-/** Generate star positions eagerly */
-function generateStarPositions(count) {
-  const arr = new Float32Array(count * 3);
-  for (let i = 0; i < count * 3; i += 3) {
-    arr[i] = (Math.random() - 0.5) * 50;
-    arr[i + 1] = (Math.random() - 0.5) * 50;
-    arr[i + 2] = (Math.random() - 0.5) * 50 - 10;
-  }
-  return arr;
-}
 
-/**
- * Rotating Earth mesh with cloud layer and atmospheric glow.
- * @param {{ onHover: Function, onUnhover: Function }} props
- */
+
+/** Rotating Earth mesh with high-fidelity layers */
 function EarthGlobe({ onHover, onUnhover }) {
   const meshRef = useRef();
   const cloudRef = useRef();
-  const [texture, setTexture] = useState(null);
+  const [textures, setTextures] = useState({ day: null, night: null });
 
   useEffect(() => {
     const loader = new THREE.TextureLoader();
-    loader.load(
-      EARTH_TEXTURE_URL,
-      (tex) => setTexture(tex),
-      undefined,
-      (err) => console.warn('Earth texture failed to load, falling back to blue color.', err)
-    );
+    loader.setCrossOrigin('anonymous');
+    
+    const loadTex = (url) => new Promise((res) => loader.load(url, res));
+    
+    Promise.all([
+      loadTex(EARTH_TEXTURE_URL),
+      loadTex(EARTH_NIGHT_TEXTURE_URL)
+    ]).then(([day, night]) => {
+      day.colorSpace = THREE.SRGBColorSpace;
+      night.colorSpace = THREE.SRGBColorSpace;
+      setTextures({ day, night });
+    }).catch(err => console.warn('Earth textures failed to load', err));
   }, []);
 
   useFrame(() => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += EARTH_ROTATION_SPEED;
-    }
-    if (cloudRef.current) {
-      cloudRef.current.rotation.y += EARTH_ROTATION_SPEED * 1.3;
-    }
+    if (meshRef.current) meshRef.current.rotation.y += EARTH_ROTATION_SPEED;
+    if (cloudRef.current) cloudRef.current.rotation.y += EARTH_ROTATION_SPEED * 1.3;
   });
 
   return (
     <group>
       {/* Main Earth sphere */}
-      <mesh
-        ref={meshRef}
-        onPointerOver={onHover}
-        onPointerOut={onUnhover}
-      >
+      <mesh ref={meshRef} onPointerOver={onHover} onPointerOut={onUnhover}>
         <sphereGeometry args={[EARTH_RADIUS, 64, 64]} />
-        {texture ? (
-          <meshStandardMaterial map={texture} roughness={0.6} />
-        ) : (
-          <meshStandardMaterial color="#1a6eb5" roughness={0.6} metalness={0.2} />
-        )}
+        <meshStandardMaterial 
+          map={textures.day} 
+          emissiveMap={textures.night}
+          emissive="#ffffcc"
+          emissiveIntensity={textures.night ? 2.5 : 0}
+          roughness={0.7} 
+          metalness={0.1} 
+          color={textures.day ? '#fff' : '#1a6eb5'} 
+        />
       </mesh>
-      {/* Cloud layer — subtle translucent shell */}
+      {/* Clouds */}
       <mesh ref={cloudRef}>
-        <sphereGeometry args={[EARTH_RADIUS + 0.02, 64, 64]} />
-        <meshStandardMaterial
-          color="#ffffff"
-          transparent
-          opacity={0.12}
-          depthWrite={false}
-        />
+        <sphereGeometry args={[EARTH_RADIUS + 0.05, 64, 64]} />
+        <meshStandardMaterial color="#fff" transparent opacity={0.3} blending={THREE.AdditiveBlending} />
       </mesh>
-      {/* Atmosphere glow (BackSide shader) */}
+      {/* Atmosphere */}
       <mesh>
-        <sphereGeometry args={[ATMOS_RADIUS, 64, 64]} />
-        <meshBasicMaterial
-          color="#4a9ede"
-          transparent
-          opacity={0.1}
-          blending={THREE.AdditiveBlending}
-          side={THREE.BackSide}
-        />
+        <sphereGeometry args={[ATMOS_RADIUS + 0.1, 32, 32]} />
+        <meshBasicMaterial color="#4fb2ff" transparent opacity={0.15} blending={THREE.AdditiveBlending} side={THREE.BackSide} />
       </mesh>
+    </group>
+  );
+}
+
+/** Grand Solar System Overview — Concentric Rings & Sun */
+function SolarSystemOverview() {
+  const groupRef = useRef();
+  const planets = useMemo(() => [
+    { name: 'MERCURY', dist: 8, size: 0.15, color: '#999', speed: 1.6 },
+    { name: 'VENUS', dist: 12, size: 0.35, color: '#e3bb76', speed: 1.17 },
+    { name: 'EARTH', dist: 18, size: 0.45, color: '#1a6eb5', speed: 1 },
+    { name: 'MARS', dist: 25, size: 0.3, color: '#c1440e', speed: 0.8 },
+    { name: 'JUPITER', dist: 40, size: 1.2, color: '#d39c7e', speed: 0.4 },
+    { name: 'SATURN', dist: 55, size: 1.0, color: '#c5ab6e', speed: 0.3 },
+  ], []);
+
+  useFrame((state) => {
+    if (!groupRef.current) return;
+    const time = state.clock.elapsedTime * 0.2;
+    groupRef.current.children.forEach((group, i) => {
+      if (i === 0) return; // Skip Sun
+      const p = planets[i - 1];
+      const angle = time * p.speed + (i * 1.5);
+      group.position.x = Math.cos(angle) * p.dist;
+      group.position.z = Math.sin(angle) * p.dist;
+    });
+  });
+
+  return (
+    <group ref={groupRef}>
+      {/* Glowing Sun */}
+      <mesh position={[0, 0, 0]}>
+        <sphereGeometry args={[4, 64, 64]} />
+        <meshBasicMaterial color="#ffcc33" />
+        <pointLight intensity={10} distance={150} color="#ffcc33" />
+      </mesh>
+      
+      {planets.map((p) => (
+        <group key={p.name}>
+          {/* Orbital Ring */}
+          <mesh rotation={[Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[p.dist - 0.05, p.dist + 0.05, 128]} />
+            <meshBasicMaterial color="#ffffff" transparent opacity={0.15} side={THREE.DoubleSide} />
+          </mesh>
+          {/* Planet Body */}
+          <group>
+            <mesh>
+              <sphereGeometry args={[p.size, 32, 32]} />
+              <meshStandardMaterial color={p.color} emissive={p.color} emissiveIntensity={0.2} />
+            </mesh>
+          </group>
+        </group>
+      ))}
     </group>
   );
 }
 
 /** Starfield background for Earth scene */
 function EarthStars() {
-  const positions = useMemo(() => generateStarPositions(STAR_COUNT), []);
+  const [positions] = useState(() => {
+    const arr = new Float32Array(STAR_COUNT * 3);
+    for (let i = 0; i < STAR_COUNT * 3; i += 3) {
+      arr[i] = (Math.random() - 0.5) * 50;
+      arr[i + 1] = (Math.random() - 0.5) * 50;
+      arr[i + 2] = (Math.random() - 0.5) * 50 - 10;
+    }
+    return arr;
+  });
 
   return (
     <points>
@@ -123,16 +164,155 @@ function EarthStars() {
   );
 }
 
+/** 
+ * Procedural 3D Spacecraft — Shared design for mission continuity
+ */
+function Spacecraft3D({ launched }) {
+  const groupRef = useRef();
+  const engineRef = useRef();
+  const velocity = useRef(0);
+
+  useFrame((state, delta) => {
+    if (!groupRef.current) return;
+    const time = state.clock.elapsedTime;
+
+    if (launched) {
+      // Accelerate upwards smoothly (Starship style)
+      velocity.current += delta * 1.2;
+      groupRef.current.position.y += velocity.current;
+      groupRef.current.position.z -= velocity.current * 0.3; // Clean outward arc
+      
+// Engine flicker intensity (Cyan Starship flare)
+       if (engineRef.current) {
+         engineRef.current.scale.y = 1.5 + Math.sin(time * 30) * 0.2;
+         // Use deterministic values instead of Math.random for flicker effect
+         const flickerBase = 8;
+         const flickerVariation = Math.sin(time * 20) * 2; // Oscillating value instead of random
+         engineRef.current.material.emissiveIntensity = flickerBase + flickerVariation;
+       }
+     } else {
+       // Pre-launch static state
+       if (engineRef.current) {
+         engineRef.current.scale.y = 0.5 + Math.sin(time * 15) * 0.1;
+         // Use deterministic values instead of Math.random for flicker effect
+         const flickerBase = 2;
+         const flickerVariation = Math.sin(time * 10); // Oscillating value instead of random
+         engineRef.current.material.emissiveIntensity = flickerBase + flickerVariation;
+       }
+    }
+  });
+
+  return (
+    <group ref={groupRef} position={[0, -0.45, 3]} scale={0.35}>
+      {/* Main Hull */}
+      <mesh>
+        <cylinderGeometry args={[0.3, 0.4, 1.2, 32]} />
+        <meshStandardMaterial color="#c0c0c8" metalness={0.9} roughness={0.1} />
+      </mesh>
+      {/* Nose Cone */}
+      <mesh position={[0, 0.8, 0]}>
+        <coneGeometry args={[0.3, 0.5, 32]} />
+        <meshStandardMaterial color="#c0c0c8" />
+      </mesh>
+      {/* Fins */}
+      {[0, 180].map((deg) => (
+        <mesh key={deg} rotation={[0, (deg * Math.PI) / 180, 0]} position={[0, -0.4, 0]}>
+          <boxGeometry args={[0.6, 0.3, 0.05]} />
+          <meshStandardMaterial color="#444" />
+        </mesh>
+      ))}
+      {/* Exhaust Nozzle */}
+      <mesh position={[0, -0.65, 0]}>
+        <cylinderGeometry args={[0.2, 0.3, 0.15, 16]} />
+        <meshStandardMaterial color="#222" />
+      </mesh>
+      {/* Cyan Engine Flare (Starship Style) */}
+      <mesh ref={engineRef} position={[0, -0.9, 0]}>
+        <cylinderGeometry args={[0.15, 0.05, 0.4, 16]} />
+        <meshStandardMaterial 
+          color="#00ffff" 
+          emissive="#00ccff" 
+          emissiveIntensity={4} 
+          transparent 
+          opacity={0.9} 
+        />
+      </mesh>
+    </group>
+  );
+}
+
+/** Earth Ground Plate & Launch Tower */
+function LaunchpadSurface() {
+  return (
+    <group position={[0, -0.5, 3]}>
+      {/* Ground Plate */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]}>
+        <circleGeometry args={[1, 64]} />
+        <meshStandardMaterial color="#111" metalness={0.5} roughness={0.5} />
+      </mesh>
+      {/* Launch Tower Pillar */}
+      <mesh position={[-0.6, 0.6, -0.2]}>
+        <boxGeometry args={[0.1, 1.5, 0.1]} />
+        <meshStandardMaterial color="#222" />
+      </mesh>
+    </group>
+  );
+}
+
+/** 
+ * SceneContent — Handles the transition from wide Solar System to detailed Earth
+ */
+function SceneContent({ introScroll, rocketLaunched, onHover, onUnhover }) {
+  useFrame((state) => {
+    // Camera Zooming Logic
+    const zPos = THREE.MathUtils.lerp(60, 5, introScroll);
+    const yPos = THREE.MathUtils.lerp(40, 0, introScroll);
+    const xPos = THREE.MathUtils.lerp(30, 0, introScroll);
+    
+    state.camera.position.set(xPos, yPos, zPos);
+    state.camera.lookAt(0, 0, 0);
+
+    // Follow rocket slightly if launched
+    if (rocketLaunched) {
+      state.camera.position.y += Math.max(0, (state.camera.position.y < 10 ? 0.02 : 0));
+    }
+  });
+
+  return (
+    <>
+      <ambientLight intensity={0.2} />
+      <directionalLight position={[20, 10, 20]} intensity={3.0} />
+      <pointLight position={[-15, 0, -10]} color="#1a6eb5" intensity={1.5} />
+      
+<Suspense fallback={null}>
+            {/* Solar System Overview */}
+            <group visible={introScroll < 0.8}>
+              <SolarSystemOverview />
+            </group>
+
+            {/* Detailed Earth */}
+            <group 
+              position={[0, -10.5 * (1 - introScroll), -2 * (1 - introScroll)]} 
+              scale={1 + introScroll * 4}
+            >
+              <EarthGlobe onHover={onHover} onUnhover={onUnhover} />
+              
+              {/* Surface Details appear near the end of zoom */}
+              <group visible={introScroll > 0.85}>
+                <LaunchpadSurface />
+                <Spacecraft3D launched={rocketLaunched} />
+              </group>
+            </group>
+          </Suspense>
+      <EarthStars />
+    </>
+  );
+}
+
 /** Error boundary fallback for canvas */
 function CanvasFallback() {
   return (
-    <div style={{
-      width: '100%', height: '100%', display: 'flex',
-      alignItems: 'center', justifyContent: 'center',
-      background: 'var(--deep)', color: 'var(--chrome)',
-      fontFamily: 'var(--font-display)', fontSize: '12px',
-      letterSpacing: '0.15em',
-    }}>
+    <div className="canvas-fallback">
       INITIALIZING EARTH RENDER...
     </div>
   );
@@ -141,15 +321,16 @@ function CanvasFallback() {
 /**
  * Section1Launch — Full T-Minus Zero launch section.
  */
-function Section1Launch() {
+function Section1Launch({ active, showModal }) {
   const { isMobile, isTablet } = useDeviceDetect();
   const [displayedText, setDisplayedText] = useState('');
   const [countdown, setCountdown] = useState(COUNTDOWN_START);
-  const [countdownDone, setCountdownDone] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [rocketLaunched, setRocketLaunched] = useState(false);
   const indexRef = useRef(0);
   const sectionRef = useRef(null);
+  const [introScroll, setIntroScroll] = useState(0);
+  const scrollRef = useRef(0);
 
   /* Typewriter effect */
   useEffect(() => {
@@ -165,22 +346,32 @@ function Section1Launch() {
     return () => clearInterval(interval);
   }, []);
 
-  /* Countdown timer */
-  useEffect(() => {
-    if (countdown <= 0) {
-      setCountdownDone(true);
-      return;
-    }
-    const timeout = setTimeout(() => setCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(timeout);
-  }, [countdown]);
+/* Countdown timer */
+    useEffect(() => {
+      if (countdown <= 0) {
+        // Countdown finished
+        return;
+      }
+      const timeout = setTimeout(() => setCountdown((c) => c - 1), 1000);
+      return () => clearTimeout(timeout);
+    }, [countdown]);
 
-  const handleLaunch = useCallback(() => {
-    setRocketLaunched(true);
-    setTimeout(() => {
-      window.scrollTo({ top: window.innerHeight * 1.2, behavior: 'smooth' });
-    }, 800);
-  }, []);
+  /* Track Scroll for Zoom and Automated Launch */
+  useEffect(() => {
+    const handleScroll = () => {
+      const sp = window.scrollY / (window.innerHeight * 2);
+      const progress = Math.max(0, Math.min(1, sp));
+      setIntroScroll(progress);
+      scrollRef.current = progress;
+
+      // Automated Launch Logic (threshold 0.98)
+      if (progress > 0.98 && !rocketLaunched) {
+        setRocketLaunched(true);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [rocketLaunched]);
 
   const handleEarthHover = useCallback(() => setShowTooltip(true), []);
   const handleEarthUnhover = useCallback(() => setShowTooltip(false), []);
@@ -190,7 +381,7 @@ function Section1Launch() {
   return (
     <section
       ref={sectionRef}
-      className="section section-launch"
+      className={`section section-launch ${rocketLaunched ? 'camera-shake' : ''}`}
       id="section-launch"
       aria-label="T-Minus Zero — Earth launch sequence"
     >
@@ -205,92 +396,36 @@ function Section1Launch() {
           <div className="launch-countdown" aria-live="polite" aria-label={`Countdown: ${countdown}`}>
             T-{String(countdown).padStart(2, '0')}
           </div>
-          {countdownDone && (
-            <button
-              className="launch-button"
-              onClick={handleLaunch}
-              aria-label="Initiate launch sequence"
-              data-hoverable="true"
-            >
-              INITIATE LAUNCH
-            </button>
+          {rocketLaunched && (
+            <div className="launch-countdown warning" style={{color: 'var(--hud-green)', marginTop: '20px', animation: 'pulse-bounce 0.5s infinite'}}>ASCENT INITIATED</div>
           )}
         </div>
       </div>
 
-      {/* Three.js Earth */}
-      <div className="launch-canvas">
-        <Suspense fallback={<CanvasFallback />}>
-          <Canvas
-            dpr={pixelRatio}
-            camera={{ position: [0, 0, 5], fov: 50 }}
-            style={{ background: 'transparent' }}
-          >
-            <ambientLight intensity={0.3} />
-            <directionalLight position={[5, 3, 5]} intensity={2.5} />
-            <Suspense fallback={null}>
-              <EarthGlobe onHover={handleEarthHover} onUnhover={handleEarthUnhover} />
-            </Suspense>
-            <EarthStars />
-          </Canvas>
-        </Suspense>
-
-        {/* Earth tooltip */}
-        <div className={`earth-tooltip ${showTooltip ? 'visible' : ''}`}
-          style={{ bottom: '60px', right: '60px' }}
-        >
-          LAUNCH COORDS: {MISSION_DATA.launchCoords}
-          <br />
-          {MISSION_DATA.launchSite}
-        </div>
-
-        {/* Rocket SVG overlay */}
-        <svg
-          id="rocket-svg"
-          className={`rocket-launch-svg ${rocketLaunched ? 'launched' : ''}`}
-          viewBox="0 0 60 140"
-          width="60"
-          height="140"
-          aria-hidden="true"
-        >
-          {/* Body */}
-          <rect x="20" y="40" width="20" height="70" rx="4" fill="#8ca0b8" />
-          {/* Nose cone */}
-          <polygon points="30,5 20,45 40,45" fill="#8ca0b8" />
-          {/* Fins */}
-          <polygon points="20,95 8,120 20,110" fill="#6a8098" />
-          <polygon points="40,95 52,120 40,110" fill="#6a8098" />
-          {/* Engine bell */}
-          <polygon points="22,110 18,125 42,125 38,110" fill="#555" />
-          {/* Window */}
-          <circle cx="30" cy="65" r="6" fill="#1a6eb5" opacity="0.8" />
-          <circle cx="30" cy="65" r="4" fill="#4a9ede" opacity="0.5" />
-          {/* Exhaust */}
-          <g className="rocket-exhaust">
-            <ellipse cx="30" cy="130" rx="8" ry="5" fill="#ff6b35" opacity="0.9">
-              <animate attributeName="ry" values="5;7;5" dur="0.2s" repeatCount="indefinite" />
-            </ellipse>
-            <ellipse cx="30" cy="138" rx="5" ry="3" fill="#e8813a" opacity="0.6">
-              <animate attributeName="ry" values="3;5;3" dur="0.15s" repeatCount="indefinite" />
-            </ellipse>
-            <ellipse cx="30" cy="144" rx="3" ry="2" fill="#ffaa44" opacity="0.4">
-              <animate attributeName="ry" values="2;4;2" dur="0.18s" repeatCount="indefinite" />
-            </ellipse>
-          </g>
-        </svg>
-      </div>
-
-      {/* Scroll prompt */}
-      {countdownDone && !rocketLaunched && (
-        <div className="scroll-prompt">
-          <span>Scroll to Launch</span>
-          <div className="scroll-arrow">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M12 4L12 20M12 20L6 14M12 20L18 14" stroke="var(--hud-green)" strokeWidth="1.5" />
-            </svg>
-          </div>
+      {/* Three.js Scene — Conditional mount for GPU performance */}
+      {(active || showModal) && (
+        <div className="launch-canvas" style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, opacity: introScroll >= 1 ? 0 : 1, pointerEvents: introScroll >= 1 ? 'none' : 'auto', transition: 'opacity 0.3s' }}>
+          <Suspense fallback={<CanvasFallback />}>
+            <Canvas dpr={pixelRatio} camera={{ position: [20, 30, 50], fov: 45 }}>
+              <SceneContent 
+                introScroll={introScroll} 
+                rocketLaunched={rocketLaunched}
+                onHover={handleEarthHover}
+                onUnhover={handleEarthUnhover}
+              />
+            </Canvas>
+          </Suspense>
         </div>
       )}
+
+      {/* Earth tooltip */}
+      <div className={`earth-tooltip ${showTooltip ? 'visible' : ''}`}
+        style={{ bottom: '60px', right: '60px' }}
+      >
+        LAUNCH COORDS: {MISSION_DATA.launchCoords}
+        <br />
+        {MISSION_DATA.launchSite}
+      </div>
 
       {/* Telemetry ticker */}
       <div className="launch-telemetry">
@@ -301,6 +436,14 @@ function Section1Launch() {
             </span>
           ))}
         </div>
+      </div>
+
+      {/* Scroll hint — fades out as user scrolls */}
+      <div className="scroll-hint" style={{ opacity: introScroll < 0.05 ? 1 : 0, transition: 'opacity 0.6s' }}>
+        <div className="scroll-hint-text">SCROLL TO EXPLORE</div>
+        <svg className="scroll-hint-chevron" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--hud-green)" strokeWidth="1.5">
+          <path d="M7 10L12 15L17 10" />
+        </svg>
       </div>
     </section>
   );
