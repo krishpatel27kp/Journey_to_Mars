@@ -260,7 +260,7 @@ function SceneContent({ introScroll, rocketLaunched, onHover, onUnhover }) {
       <directionalLight position={[20, 10, 20]} intensity={3.0} />
       <pointLight position={[-15, 0, -10]} color="#1a6eb5" intensity={1.5} />
       
-<Suspense fallback={null}>
+      <React.Suspense fallback={null}>
             {/* Solar System Overview */}
             <group visible={introScroll < 0.8}>
               <SolarSystemOverview />
@@ -279,7 +279,7 @@ function SceneContent({ introScroll, rocketLaunched, onHover, onUnhover }) {
                 <Spacecraft3D launched={rocketLaunched} />
               </group>
             </group>
-          </Suspense>
+          </React.Suspense>
       <MissionStars count={STAR_COUNT} radius={100} size={0.05} />
     </>
   );
