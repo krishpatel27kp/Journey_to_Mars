@@ -357,7 +357,7 @@ function Section1Launch({ active, showModal }) {
   return (
     <section
       ref={sectionRef}
-      className={`section section-launch ${rocketLaunched ? 'camera-shake' : ''}`}
+      className="section section-launch"
       id="section-launch"
       aria-label="T-Minus Zero — Earth launch sequence"
     >
@@ -369,12 +369,7 @@ function Section1Launch({ active, showModal }) {
           <div className="launch-narrative">
             <p>{displayedText}<span className="typewriter-cursor" /></p>
           </div>
-          <div className="launch-countdown" aria-live="polite" aria-label={`Countdown: ${countdown}`}>
-            T-{String(countdown).padStart(2, '0')}
-          </div>
-          {rocketLaunched && (
-            <div className="launch-countdown warning" style={{color: 'var(--hud-green)', marginTop: '20px', animation: 'pulse-bounce 0.5s infinite'}}>ASCENT INITIATED</div>
-          )}
+          {/* Countdown and Ascent text removed per user request */}
         </div>
       </div>
 
@@ -404,15 +399,7 @@ function Section1Launch({ active, showModal }) {
       </div>
 
       {/* Telemetry ticker */}
-      <div className="launch-telemetry">
-        <div className="telemetry-track">
-          {[...TELEMETRY_ITEMS, ...TELEMETRY_ITEMS].map((item, i) => (
-            <span className="telemetry-item" key={i}>
-              {item.label}:<span className="telemetry-value">{item.value}</span>
-            </span>
-          ))}
-        </div>
-      </div>
+      {/* Telemetry ticker removed per user request */}
 
       {/* Scroll hint — fades out as user scrolls */}
       <div className="scroll-hint" style={{ opacity: introScroll < 0.05 ? 1 : 0, transition: 'opacity 0.6s' }}>

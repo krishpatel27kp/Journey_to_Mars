@@ -265,9 +265,7 @@ function Spacecraft3D({ scrollProgress }) {
         const intensity = Math.min(1, (sp - 0.7) * 5);
         heatGlowRef.current.visible = true;
         heatGlowRef.current.material.opacity = intensity * 0.6;
-        // Add subtle shake
-        groupRef.current.position.x = (Math.random() - 0.5) * 0.02 * intensity;
-        groupRef.current.position.y += (Math.random() - 0.5) * 0.02 * intensity;
+        // Shake removed per user request
       } else {
         heatGlowRef.current.visible = false;
         groupRef.current.position.x = 0;

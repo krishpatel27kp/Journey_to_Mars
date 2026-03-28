@@ -292,7 +292,8 @@
 }
 
 .void-scene {
-  position: relative;
+  position: sticky;
+  top: 0;
   width: 100%;
   height: 100vh;
   overflow: hidden;
@@ -592,7 +593,14 @@
 /* === SECTION 2 — THE VOID === */
 .section-void {
   position: relative;
-  height: 400vh;
+  height: 250vh;
+  background: var(--void);
+  border: none;
+}
+
+.section-orbit {
+  position: relative;
+  height: 100vh;
   background: var(--void);
   border: none;
 }
