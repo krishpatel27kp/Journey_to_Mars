@@ -4,11 +4,12 @@
  * countdown, rocket liftoff SVG, telemetry ticker, INITIATE LAUNCH button.
  * @module Section1Launch
  */
-import { memo, useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react';
+import React, { memo, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { NARRATIVE_TEXT, TELEMETRY_ITEMS, MISSION_DATA } from '../../utils/telemetryData';
 import { useDeviceDetect } from '../../hooks/useDeviceDetect';
+import { MissionStars } from '../visuals/MissionStars';
 
 /** Typewriter character delay in milliseconds */
 const TYPEWRITER_DELAY_MS = 40;
@@ -138,31 +139,6 @@ function SolarSystemOverview() {
 }
 
 /** Starfield background for Earth scene */
-function EarthStars() {
-  const [positions] = useState(() => {
-    const arr = new Float32Array(STAR_COUNT * 3);
-    for (let i = 0; i < STAR_COUNT * 3; i += 3) {
-      arr[i] = (Math.random() - 0.5) * 50;
-      arr[i + 1] = (Math.random() - 0.5) * 50;
-      arr[i + 2] = (Math.random() - 0.5) * 50 - 10;
-    }
-    return arr;
-  });
-
-  return (
-    <points>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={STAR_COUNT}
-          array={positions}
-          itemSize={3}
-        />
-      </bufferGeometry>
-      <pointsMaterial color="#e8e4d8" size={0.05} sizeAttenuation transparent opacity={0.8} />
-    </points>
-  );
-}
 
 /** 
  * Procedural 3D Spacecraft — Shared design for mission continuity
@@ -304,7 +280,7 @@ function SceneContent({ introScroll, rocketLaunched, onHover, onUnhover }) {
               </group>
             </group>
           </Suspense>
-      <EarthStars />
+      <MissionStars count={STAR_COUNT} radius={100} size={0.05} />
     </>
   );
 }
@@ -405,7 +381,7 @@ function Section1Launch({ active, showModal }) {
       {/* Three.js Scene — Conditional mount for GPU performance */}
       {(active || showModal) && (
         <div className="launch-canvas" style={{ width: '100vw', height: '100vh', position: 'fixed', top: 0, opacity: introScroll >= 1 ? 0 : 1, pointerEvents: introScroll >= 1 ? 'none' : 'auto', transition: 'opacity 0.3s' }}>
-          <Suspense fallback={<CanvasFallback />}>
+          <React.Suspense fallback={<CanvasFallback />}>
             <Canvas dpr={pixelRatio} camera={{ position: [20, 30, 50], fov: 45 }}>
               <SceneContent 
                 introScroll={introScroll} 
@@ -414,7 +390,7 @@ function Section1Launch({ active, showModal }) {
                 onUnhover={handleEarthUnhover}
               />
             </Canvas>
-          </Suspense>
+          </React.Suspense>
         </div>
       )}
 

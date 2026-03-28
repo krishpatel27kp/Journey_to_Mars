@@ -161,6 +161,24 @@ function Section5Surface({ active, showModal }) {
   /* Send message to Earth with radio wave animation */
   const handleSendMessage = useCallback(() => {
     if (!message.trim() || transmitting) return;
+    
+    // Mission audio cue: Radio transmission chirp
+    try {
+      const freq = 880; // High pitch data burst
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.3);
+      gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.3);
+    } catch (e) { /* ignore web audio policy if blocked */ }
+
     setTransmitting(true);
     setDelivered(false);
     setMessage('');

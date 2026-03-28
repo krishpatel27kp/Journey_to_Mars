@@ -2,7 +2,7 @@
  * Section2Void — "THE VOID" Deep space transit.
  * Features: Three.js starfield, spacecraft SVG, milestones, distance counter.
  */
-import { memo, useState, useRef, useEffect, useCallback, useMemo, Suspense } from 'react';
+import React, { memo, useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { gsap } from 'gsap';
@@ -10,6 +10,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { NARRATIVE_TEXT, MILESTONES } from '../../utils/telemetryData';
 import { formatNumber } from '../../utils/lightSpeedDelay';
 import { useDeviceDetect } from '../../hooks/useDeviceDetect';
+import { MissionStars } from '../visuals/MissionStars';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -23,58 +24,9 @@ const MARS_TEXTURE_URL = '/textures/mars_2k.jpg';
 
 
 
-/** Generate star positions eagerly */
-function generateStarPositions(num, spread) {
-  const arr = new Float32Array(num * 3);
-  for (let i = 0; i < num * 3; i += 3) {
-    arr[i] = (Math.random() - 0.5) * spread;
-    arr[i + 1] = (Math.random() - 0.5) * spread;
-    arr[i + 2] = (Math.random() - 0.5) * spread;
-  }
-  return arr;
-}
+/** Generate star positions eagerly — DEPRECATED: use MissionStars utility */
 
 /** Dynamic starfield with warp (stretch) effect based on scroll speed */
-function StarLayers({ scrollProgress, isMobile }) {
-  const count = isMobile ? STAR_COUNT_MOBILE : STAR_COUNT_DESKTOP;
-  const spread = isMobile ? 80 : 100;
-  const layerRef = useRef();
-  const prevScroll = useRef(0);
-  const velocity = useRef(0);
-  const [points] = useState(() => generateStarPositions(count, spread));
-
-  useFrame(() => {
-    const sp = scrollProgress.current || 0;
-    
-    // Calculate scroll velocity for warp stretch
-    velocity.current = Math.abs(sp - prevScroll.current) * 50;
-    prevScroll.current = sp;
-    
-    // Constant slow rotation + high speed scroll influence
-    layerRef.current.rotation.z += 0.0005;
-    layerRef.current.position.z = sp * 100;
-    
-    // Warp speed stretch: lengthen stars along Z axis
-    const scaling = 1 + velocity.current * 2;
-    layerRef.current.scale.z = THREE.MathUtils.lerp(layerRef.current.scale.z, scaling, 0.1);
-  });
-
-  return (
-    <points ref={layerRef}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" count={count} array={points} itemSize={3} />
-      </bufferGeometry>
-      <pointsMaterial 
-        color="#ffffff" 
-        size={0.08} 
-        transparent 
-        opacity={0.6} 
-        sizeAttenuation 
-        blending={THREE.AdditiveBlending}
-      />
-    </points>
-  );
-}
 
 /** Distant Solar System Background — Mercury, Venus, Jupiter, Saturn */
 function SolarSystemBackdrop() {
@@ -476,21 +428,21 @@ function Section2Void({ active, showModal }) {
         {/* Three.js starfield and Mars Approach — Performance Optimized */}
         <div className="void-canvas" onClick={handleCanvasClick} data-hoverable="true" role="button">
           {active && (
-            <Suspense fallback={null}>
+            <React.Suspense fallback={null}>
               <Canvas dpr={pixelRatio} camera={{ position: [0, 0, 5], fov: 60 }}>
                 {/* Cinematic Space Lighting */}
                 <ambientLight intensity={0.2} />
                 <directionalLight position={[10, 5, 2]} intensity={3} color="#ffe5d9" />
                 <pointLight position={[-5, -2, -5]} intensity={1.5} color="#44ddff" />
                 
-                <StarLayers scrollProgress={scrollRef} isMobile={isMobile} />
+                <MissionStars count={isMobile ? 1200 : 3500} scrollProgress={scrollRef} />
                 <SolarSystemBackdrop />
                 <EarthDeparture scrollProgress={scrollRef} />
                 <MarsApproach scrollProgress={scrollRef} />
                 <Spacecraft3D scrollProgress={scrollRef} />
                 <ClickParticles bursts={bursts} />
               </Canvas>
-            </Suspense>
+            </React.Suspense>
           )}
         </div>
 

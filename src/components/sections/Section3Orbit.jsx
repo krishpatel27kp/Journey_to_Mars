@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NARRATIVE_TEXT, LANDING_ZONES } from '../../utils/telemetryData';
 import { useDeviceDetect } from '../../hooks/useDeviceDetect';
+import { MissionStars } from '../visuals/MissionStars';
 
 const MARS_RADIUS = 2;
 const MARS_ROTATION_SPEED = 0.0008;
@@ -177,7 +178,7 @@ function Section3Orbit({ active, showModal }) {
               <React.Suspense fallback={null}>
                 <MarsMesh />
               </React.Suspense>
-              <OrbitStars />
+              <MissionStars count={STAR_COUNT} twinkle size={0.05} />
             </Canvas>
           </React.Suspense>
         )}
