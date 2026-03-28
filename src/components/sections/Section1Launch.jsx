@@ -64,11 +64,11 @@ function EarthGlobe({ onHover, onUnhover }) {
         <meshStandardMaterial 
           map={textures.day} 
           emissiveMap={textures.night}
-          emissive="#ffffcc"
-          emissiveIntensity={textures.night ? 2.5 : 0}
+          emissive="#2244ff"
+          emissiveIntensity={textures.night ? 1.5 : 0}
           roughness={0.7} 
           metalness={0.1} 
-          color={textures.day ? '#fff' : '#1a6eb5'} 
+          color={textures.day ? '#fff' : '#0a214d'} 
         />
       </mesh>
       {/* Clouds */}
@@ -111,11 +111,11 @@ function SolarSystemOverview() {
 
   return (
     <group ref={groupRef}>
-      {/* Glowing Sun */}
-      <mesh position={[0, 0, 0]}>
+      {/* Glowing Sun — Offset slightly in Z to avoid perfect center overlap */}
+      <mesh position={[0, 0, -5]}>
         <sphereGeometry args={[4, 64, 64]} />
         <meshBasicMaterial color="#ffcc33" />
-        <pointLight intensity={10} distance={150} color="#ffcc33" />
+        <pointLight intensity={8} distance={150} color="#ffcc33" />
       </mesh>
       
       {planets.map((p) => (
@@ -266,9 +266,9 @@ function SceneContent({ introScroll, rocketLaunched, onHover, onUnhover }) {
               <SolarSystemOverview />
             </group>
 
-            {/* Detailed Earth */}
+            {/* Detailed Earth — Position interpolates from safe distance to zero */}
             <group 
-              position={[0, -10.5 * (1 - introScroll), -2 * (1 - introScroll)]} 
+              position={[0, -25 * (1 - introScroll), -10 * (1 - introScroll)]} 
               scale={1 + introScroll * 4}
             >
               <EarthGlobe onHover={onHover} onUnhover={onUnhover} />
