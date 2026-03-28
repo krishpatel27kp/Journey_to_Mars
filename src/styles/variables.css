@@ -1,0 +1,52 @@
+/* ============================================
+   ARES-1 Mission — Design Tokens
+   Journey to Mars | Frontend Odyssey Hackathon
+   ============================================ */
+
+:root {
+  /* Core palette */
+  --void:        #03050a;
+  --deep:        #080d1a;
+  --mars-rust:   #c1440e;
+  --mars-dust:   #e8813a;
+  --earth-blue:  #1a6eb5;
+  --star-white:  #e8e4d8;
+  --hud-green:   #00ff88;
+  --hud-dim:     #00ff8840;
+  --chrome:      #8ca0b8;
+
+  /* Extended palette */
+  --mars-deep:   #8a2f08;
+  --void-80:     rgba(3, 5, 10, 0.8);
+  --deep-80:     rgba(8, 13, 26, 0.8);
+  --star-white-85: rgba(232, 228, 216, 0.85);
+  --hud-green-20: rgba(0, 255, 136, 0.2);
+  --mars-rust-30: rgba(193, 68, 14, 0.3);
+
+  /* Typography */
+  --font-display: 'Orbitron', sans-serif;
+  --font-body: 'Crimson Pro', serif;
+
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 2rem;
+  --space-xl: 4rem;
+  --space-2xl: 6rem;
+
+  /* Transitions */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-sine: cubic-bezier(0.37, 0, 0.63, 1);
+  --duration-fast: 0.2s;
+  --duration-normal: 0.4s;
+  --duration-slow: 0.8s;
+
+  /* Z-index layers */
+  --z-canvas: 1;
+  --z-content: 10;
+  --z-overlay: 20;
+  --z-hud: 50;
+  --z-modal: 100;
+  --z-cursor: 9999;
+}

@@ -1,0 +1,299 @@
+/* ============================================
+   ARES-1 Mission — Global Styles
+   ============================================ */
+
+@import './variables.css';
+
+/* === Reset === */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: auto; /* GSAP handles scrolling */
+  overflow-x: hidden;
+  background: var(--void);
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--star-white);
+  background: var(--void);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  position: relative;
+}
+
+/* Film grain overlay via SVG feTurbulence */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: 0.04;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* Scan-line overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+}
+
+/* Custom cursor — hide default on desktop */
+@media (hover: hover) and (pointer: fine) {
+  * {
+    cursor: none !important;
+  }
+}
+
+/* === Typography === */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--star-white);
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: clamp(1.8rem, 4vw, 3.5rem);
+}
+
+h2 {
+  font-size: clamp(1.4rem, 3vw, 2.5rem);
+}
+
+h3 {
+  font-size: clamp(1.1rem, 2.2vw, 1.6rem);
+}
+
+p {
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.7;
+  color: var(--star-white-85);
+  font-size: clamp(0.95rem, 1.1vw, 1.1rem);
+}
+
+/* HUD text utility */
+.hud-text {
+  font-family: var(--font-display);
+  font-size: 12px;
+  color: var(--hud-green);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* === Buttons === */
+button {
+  font-family: var(--font-display);
+  background: none;
+  border: 1px solid var(--hud-green);
+  color: var(--hud-green);
+  padding: 0.75rem 1.5rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--duration-normal) var(--ease-out-expo);
+}
+
+button:hover {
+  background: var(--hud-green-20);
+  box-shadow: 0 0 20px var(--hud-dim);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--hud-green);
+  outline-offset: 3px;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+/* === Focus styles for all focusable elements === */
+:focus-visible {
+  outline: 2px solid var(--hud-green);
+  outline-offset: 3px;
+}
+
+/* === Skip to content link === */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--mars-rust);
+  color: white;
+  padding: 8px 16px;
+  z-index: 10000;
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  transition: top 0.2s;
+}
+.skip-link:focus {
+  top: 0;
+}
+
+/* === Audio toggle button === */
+.audio-toggle-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: var(--z-hud);
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--hud-dim);
+  background: var(--deep-80);
+  backdrop-filter: blur(4px);
+}
+.audio-toggle-btn:hover {
+  border-color: var(--hud-green);
+}
+
+/* === HUD Bottom Bar === */
+.hud-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-hud);
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: 8px 24px;
+  background: var(--deep-80);
+  border-top: 1px solid var(--hud-dim);
+  backdrop-filter: blur(8px);
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  pointer-events: none;
+  user-select: none;
+  overflow: hidden;
+}
+.hud-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.hud-item-label {
+  color: var(--chrome);
+  opacity: 0.6;
+}
+.hud-item-value {
+  color: var(--hud-green);
+}
+
+/* === Scrollbar === */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--void);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--mars-rust);
+  border-radius: 2px;
+}
+
+/* === Section base === */
+.section {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* === HUD Borders === */
+.hud-border {
+  border: 1px solid var(--hud-dim);
+  clip-path: polygon(
+    0 12px,
+    12px 0,
+    calc(100% - 12px) 0,
+    100% 12px,
+    100% calc(100% - 12px),
+    calc(100% - 12px) 100%,
+    12px 100%,
+    0 calc(100% - 12px)
+  );
+  padding: var(--space-lg);
+  background: var(--deep-80);
+  backdrop-filter: blur(8px);
+}
+
+/* === Selection === */
+::selection {
+  background: var(--mars-rust);
+  color: var(--star-white);
+}
+
+/* === Accessibility — Reduced Motion === */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* === Links === */
+a {
+  color: var(--hud-green);
+  text-decoration: none;
+  transition: color var(--duration-fast);
+}
+
+a:hover {
+  color: var(--mars-dust);
+}
+
+/* === Images === */
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* === Canvas container === */
+.canvas-container {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-canvas);
+}
+
+/* Root app */
+#root {
+  position: relative;
+}

@@ -1,0 +1,91 @@
+/* ============================================
+   ARES-1 Mission — Animations
+   ============================================ */
+
+/* Comms tower blinking light */
+@keyframes comms-blink {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 1; }
+}
+
+.comms-light {
+  animation: comms-blink 1s ease-in-out infinite;
+}
+
+/* Comms dish rotation */
+@keyframes dish-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.comms-dish {
+  animation: dish-rotate 8s linear infinite;
+}
+
+/* Parachute swing */
+@keyframes parachute-swing {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(8deg); }
+}
+
+.parachute-swing {
+  animation: parachute-swing 2s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+/* Heatshield glow */
+@keyframes heatshield-glow {
+  0% { stroke-dashoffset: 0; filter: drop-shadow(0 0 6px var(--mars-rust)); }
+  50% { filter: drop-shadow(0 0 12px var(--mars-dust)); }
+  100% { stroke-dashoffset: -200; filter: drop-shadow(0 0 6px var(--mars-rust)); }
+}
+
+.heatshield-rim {
+  animation: heatshield-glow 1.5s linear infinite;
+}
+
+/* Flame flicker */
+@keyframes flame-flicker {
+  0%, 100% { opacity: 0.7; transform: scaleY(1); }
+  25% { opacity: 1; transform: scaleY(1.1); }
+  50% { opacity: 0.8; transform: scaleY(0.9); }
+  75% { opacity: 1; transform: scaleY(1.05); }
+}
+
+.flame-anim {
+  animation: flame-flicker 0.3s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+/* Dust particle float */
+@keyframes dust-float {
+  0% { transform: translateX(-100vw); }
+  100% { transform: translateX(100vw); }
+}
+
+/* Progress bar spacecraft icon */
+@keyframes spacecraft-bob {
+  0%, 100% { transform: translateY(-50%) translateX(-50%); }
+  50% { transform: translateY(-50%) translateX(-50%) translateY(-2px); }
+}
+
+.progress-ship {
+  animation: spacecraft-bob 2s ease-in-out infinite;
+}
+
+/* Dancing astronaut (Easter egg) */
+@keyframes dance {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  25% { transform: rotate(-15deg) translateY(-10px); }
+  50% { transform: rotate(0deg) translateY(0); }
+  75% { transform: rotate(15deg) translateY(-10px); }
+}
+
+.dancing-astronaut {
+  position: fixed;
+  bottom: 20%;
+  right: 10%;
+  z-index: var(--z-modal);
+  animation: dance 0.5s ease-in-out infinite;
+  pointer-events: none;
+}
