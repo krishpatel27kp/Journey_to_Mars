@@ -13,6 +13,7 @@ import { NARRATIVE_TEXT, BASE_MODULES } from '../../utils/telemetryData';
 import { generateWeatherReading, formatTemperature, formatWindSpeed } from '../../utils/marsWeather';
 import { calculateSignalDelay } from '../../utils/lightSpeedDelay';
 import { useDeviceDetect } from '../../hooks/useDeviceDetect';
+import { playLandingSuccess } from '../../utils/audioEngine';
 
 /** Number of floating dust particles */
 const DUST_PARTICLE_COUNT = 30;
@@ -139,6 +140,13 @@ function Section5Surface({ active }) {
     }, WEATHER_UPDATE_INTERVAL_MS);
     return () => clearInterval(interval);
   }, []);
+
+  /* Audio: Landing Success */
+  useEffect(() => {
+    if (active) {
+      playLandingSuccess();
+    }
+  }, [active]);
 
   /* Konami code */
   useEffect(() => {

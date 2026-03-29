@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { NARRATIVE_TEXT, EDL_PHASES } from '../../utils/telemetryData';
+import { playHUDBlip, speakMissionControl } from '../../utils/audioEngine';
 
 /** Total number of EDL phases */
 const PHASE_COUNT = 4;
@@ -150,6 +151,8 @@ function Section4EDL({ active }) {
     setDirection(idx > activePhase ? 1 : -1);
     setActivePhase(idx);
     setFlippedCards({});
+    playHUDBlip(220, 'square', 0.1);
+    speakMissionControl(`Executing ${EDL_PHASES[idx].title}`);
   }, [activePhase]);
 
   const nextPhase = useCallback(() => {

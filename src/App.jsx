@@ -16,7 +16,13 @@ import MissionModal from './components/ui/MissionModal';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import SectionLoader from './components/ui/SectionLoader';
 import { SECTION_NAMES } from './utils/telemetryData';
-import { startSpaceDrone, stopSpaceDrone, resumeAudioContext } from './utils/audioEngine';
+import { 
+  startSpaceDrone, 
+  stopSpaceDrone, 
+  resumeAudioContext, 
+  playIntroSequence,
+  playHUDBlip 
+} from './utils/audioEngine';
 
 import './styles/global.css';
 import './styles/sections.css';
@@ -44,18 +50,26 @@ function App() {
   const audioRef = useRef(null);
   const appRef = useRef(null);
 
-  /** Global Audio Context Resumption */
+  /** Global Audio Context Resumption & Hover Effects */
   useEffect(() => {
     const handleGlobalInteraction = () => {
       resumeAudioContext();
-      window.removeEventListener('click', handleGlobalInteraction);
-      window.removeEventListener('touchstart', handleGlobalInteraction);
     };
+
+    const handleMouseOver = (e) => {
+      if (e.target.closest('[data-hoverable="true"]')) {
+        playHUDBlip(1200, 'sine', 0.02);
+      }
+    };
+
     window.addEventListener('click', handleGlobalInteraction);
     window.addEventListener('touchstart', handleGlobalInteraction);
+    window.addEventListener('mouseover', handleMouseOver);
+
     return () => {
       window.removeEventListener('click', handleGlobalInteraction);
       window.removeEventListener('touchstart', handleGlobalInteraction);
+      window.removeEventListener('mouseover', handleMouseOver);
     };
   }, []);
 
@@ -118,7 +132,9 @@ function App() {
 
   const handleDismissModal = useCallback(() => {
     setShowModal(false);
-    // Force start drone and unmute on explicit user mission acknowledge
+    resumeAudioContext();
+    startSpaceDrone(0.04);
+    playIntroSequence();
     setAudioMuted(false);
   }, []);
 
