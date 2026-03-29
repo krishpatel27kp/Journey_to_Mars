@@ -6,6 +6,7 @@ import { memo, useState, useEffect, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MISSION_BRIEFING, MISSION_DATA } from '../../utils/telemetryData';
+import { resumeAudioContext, startSpaceDrone, playHUDBlip } from '../../utils/audioEngine';
 
 const CHAR_DELAY_MS = 25;
 
@@ -37,6 +38,14 @@ function MissionModal({ onDismiss }) {
     setIsComplete(true);
   }, []);
 
+  const handleAcknowledge = useCallback(() => {
+    // Aggressively start audio on user interaction!
+    resumeAudioContext();
+    startSpaceDrone(0.08); // Increase intensity
+    playHUDBlip(1200, 'square', 0.1); 
+    onDismiss();
+  }, [onDismiss]);
+
   return (
     <AnimatePresence>
       <motion.div
@@ -55,10 +64,12 @@ function MissionModal({ onDismiss }) {
         >
           <div className="launch-briefing-label">CLASSIFIED · ARES PROGRAM</div>
           <h2>Mission Briefing</h2>
-          <p style={{ whiteSpace: 'pre-line', textAlign: 'left', fontFamily: 'var(--font-body)' }}>
-            {displayedText}
-            {!isComplete && <span className="typewriter-cursor" />}
-          </p>
+          <div className="mission-modal-content" style={{ maxHeight: '50vh', overflowY: 'auto', paddingRight: '10px', marginBottom: '20px' }}>
+            <p style={{ whiteSpace: 'pre-line', textAlign: 'left', fontFamily: 'var(--font-body)' }}>
+              {displayedText}
+              {!isComplete && <span className="typewriter-cursor" />}
+            </p>
+          </div>
 
           <div className="modal-facts">
             <div className="modal-fact">
@@ -87,7 +98,7 @@ function MissionModal({ onDismiss }) {
             )}
             <button
               className="launch-button"
-              onClick={onDismiss}
+              onClick={handleAcknowledge}
               aria-label="Acknowledge mission briefing and proceed"
               style={{ opacity: isComplete ? 1 : 0.8 }}
             >

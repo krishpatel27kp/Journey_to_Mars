@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef, lazy, Suspense, useCallback } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
 
 import ProgressBar from './components/ui/ProgressBar';
 import HUDLabel from './components/ui/HUDLabel';
@@ -15,12 +16,13 @@ import MissionModal from './components/ui/MissionModal';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import SectionLoader from './components/ui/SectionLoader';
 import { SECTION_NAMES } from './utils/telemetryData';
+import { startSpaceDrone, stopSpaceDrone, resumeAudioContext } from './utils/audioEngine';
 
 import './styles/global.css';
 import './styles/sections.css';
 import './styles/animations.css';
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
 /* Lazy load heavy Three.js sections */
 const Section1Launch = lazy(() => import('./components/sections/Section1Launch'));
@@ -42,6 +44,21 @@ function App() {
   const audioRef = useRef(null);
   const appRef = useRef(null);
 
+  /** Global Audio Context Resumption */
+  useEffect(() => {
+    const handleGlobalInteraction = () => {
+      resumeAudioContext();
+      window.removeEventListener('click', handleGlobalInteraction);
+      window.removeEventListener('touchstart', handleGlobalInteraction);
+    };
+    window.addEventListener('click', handleGlobalInteraction);
+    window.addEventListener('touchstart', handleGlobalInteraction);
+    return () => {
+      window.removeEventListener('click', handleGlobalInteraction);
+      window.removeEventListener('touchstart', handleGlobalInteraction);
+    };
+  }, []);
+
   /* Setup ScrollTrigger section detection */
   useEffect(() => {
     if (showModal || prefersReducedMotion) return;
@@ -59,8 +76,18 @@ function App() {
           trigger: el,
           start: 'top center',
           end: 'bottom center',
-          onEnter: () => setCurrentSection(idx),
-          onEnterBack: () => setCurrentSection(idx),
+          onEnter: () => {
+             setCurrentSection((prev) => (prev !== idx ? idx : prev));
+          },
+          onEnterBack: () => {
+             setCurrentSection((prev) => (prev !== idx ? idx : prev));
+          },
+          onLeave: () => {
+             if (idx === 0) setCurrentSection((prev) => (prev < 1 ? 1 : prev));
+          },
+          onLeaveBack: () => {
+             if (idx === 4) setCurrentSection((prev) => (prev > 3 ? 3 : prev));
+          }
         });
         triggers.push(st);
       });
@@ -80,18 +107,19 @@ function App() {
   }, []);
 
   const toggleAudio = useCallback(() => {
-    if (!audioRef.current) return;
     if (audioMuted) {
-      audioRef.current.play().catch(() => {});
+      startSpaceDrone(0.04);
       setAudioMuted(false);
     } else {
-      audioRef.current.pause();
+      stopSpaceDrone();
       setAudioMuted(true);
     }
   }, [audioMuted]);
 
   const handleDismissModal = useCallback(() => {
     setShowModal(false);
+    // Force start drone and unmute on explicit user mission acknowledge
+    setAudioMuted(false);
   }, []);
 
   const sectionData = SECTION_NAMES[currentSection] || SECTION_NAMES[0];
@@ -122,10 +150,7 @@ function App() {
       />
       <CustomCursor />
 
-      {/* Audio */}
-      <audio ref={audioRef} loop preload="none">
-        <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=" type="audio/wav" />
-      </audio>
+      {/* Audio logic handled by AudioEngine */}
 
       {/* Audio toggle */}
       <button
@@ -158,22 +183,22 @@ function App() {
         </ErrorBoundary>
         <ErrorBoundary>
           <Suspense fallback={<SectionLoader />}>
-            <Section2Void active={currentSection === 1 || currentSection === 0} showModal={showModal} />
+            <Section2Void active={currentSection === 1} showModal={showModal} />
           </Suspense>
         </ErrorBoundary>
         <ErrorBoundary>
           <Suspense fallback={<SectionLoader />}>
-            <Section3Orbit active={currentSection === 2 || currentSection === 1} showModal={showModal} />
+            <Section3Orbit active={currentSection === 2} showModal={showModal} />
           </Suspense>
         </ErrorBoundary>
         <ErrorBoundary>
           <Suspense fallback={<SectionLoader />}>
-            <Section4EDL active={currentSection === 3 || currentSection === 2} showModal={showModal} />
+            <Section4EDL active={currentSection === 3} showModal={showModal} />
           </Suspense>
         </ErrorBoundary>
         <ErrorBoundary>
           <Suspense fallback={<SectionLoader />}>
-            <Section5Surface active={currentSection === 4 || currentSection === 3} showModal={showModal} />
+            <Section5Surface active={currentSection === 4} showModal={showModal} />
           </Suspense>
         </ErrorBoundary>
       </main>

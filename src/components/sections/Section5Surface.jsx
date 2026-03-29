@@ -5,7 +5,7 @@
  * Mars terrain mountain silhouette, Konami code Easter egg.
  * @module Section5Surface
  */
-import React, { memo, useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { memo, useState, useRef, useEffect, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -122,7 +122,7 @@ const ModuleIcons = {
 /**
  * Section5Surface — Full Sol 1 surface section.
  */
-function Section5Surface({ active, showModal }) {
+function Section5Surface({ active }) {
   const { isMobile } = useDeviceDetect();
   const [weather, setWeather] = useState(generateWeatherReading);
   const [selectedModule, setSelectedModule] = useState(null);
@@ -177,7 +177,7 @@ function Section5Surface({ active, showModal }) {
       gain.connect(audioCtx.destination);
       osc.start();
       osc.stop(audioCtx.currentTime + 0.3);
-    } catch (e) { /* ignore web audio policy if blocked */ }
+    } catch { /* ignore web audio policy if blocked */ }
 
     setTransmitting(true);
     setDelivered(false);

@@ -1,6 +1,8 @@
 /**
  * Telemetry data constants used across the mission HUD.
  */
+export const COUNTDOWN_START = 10;
+export const TYPEWRITER_DELAY_MS = 25;
 
 export const MISSION_DATA = {
   name: 'ARES-1',
@@ -115,11 +117,11 @@ export const BASE_MODULES = [
 ];
 
 export const MILESTONES = [
-  { day: 1, title: 'Launch & TMI Burn', log: 'Trans-Mars injection nominal. Crew vitals stable. Solar arrays deployed.' },
-  { day: 47, title: 'Solar Panel Realignment', log: 'Solar panel realignment complete. Crew morale: nominal. First deep space EVA drill.' },
-  { day: 130, title: 'Halfway Point', log: 'Midcourse correction burn: 4.2 m/s delta-v. Communication delay now 8 minutes.' },
-  { day: 210, title: 'Mars Visual Contact', log: 'Mars visible as disc from navigation cameras. Crew begins landing simulations.' },
-  { day: 253, title: 'Mars Orbit Insertion', log: 'MOI burn successful. Orbital period: 1.88 hours. Landing site survey begins.' },
+  { day: 1, title: 'Trans-Martian Injection', log: 'Earth is already shrinking to a pale blue dot. The engines executed the burn perfectly. We are now falling toward Mars at 21,000 km/h. No turning back.' },
+  { day: 47, title: 'The Great Silence', log: 'Radio delay exceeded 3 minutes today. Conversations with Earth are dead. We are alone in a true vacuum. The hull constantly ticks from micrometeorite impacts.' },
+  { day: 130, title: 'Crossing the Threshold', log: 'Halfway point. The ship\'s chronometer ticked over. We are now closer to Mars than to Earth. Solar flares registered on the outer hull, but the magnetic shields held.' },
+  { day: 210, title: 'The Red Disc', log: 'Mars is no longer just a star in the viewport; it is a world. Rust-colored dust storms are visible through the telescope. The crew is quiet today. Reality is setting in.' },
+  { day: 253, title: 'Orbital Capture', log: 'We hit the orbital insertion window. The engines roared for the first time in months. We are in low Martian orbit. Below us lies Jezero Crater. God help us.' },
 ];
 
 export const EDL_PHASES = [

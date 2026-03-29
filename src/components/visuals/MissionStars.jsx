@@ -2,10 +2,10 @@
  * MissionStars — Reusable, high-performance starfield component.
  * Features: Warping/stretching effect during transit, twinkling stars, and point-size attenuation.
  */
-import { useRef, useMemo, useState } from 'react';
+import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { generateStarPositions, generateStarSizes } from '../../utils/stars';
+import { generateStarPositions } from '../../utils/stars';
 
 /**
  * Standard Starfield with optional velocity-based stretching.

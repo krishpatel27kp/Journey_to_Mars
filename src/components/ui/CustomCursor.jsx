@@ -1,9 +1,6 @@
-/**
- * CustomCursor — Crosshair cursor that follows the mouse with lerp smoothing.
- * Scales up on hoverable elements, disabled on touch devices.
- */
 import { memo, useEffect, useRef, useState } from 'react';
 import { useDeviceDetect } from '../../hooks/useDeviceDetect';
+import { playHUDBlip } from '../../utils/audioEngine';
 
 const CURSOR_SIZE = 24;
 const LERP_FACTOR = 0.15;
@@ -23,37 +20,41 @@ function CustomCursor() {
       mousePos.current = { x: e.clientX, y: e.clientY };
     };
 
-    const onMouseOver = (e) => {
-      const target = e.target;
-      if (
+    const isInteractive = (target) => {
+      if (!target) return false;
+      return (
         target.tagName === 'BUTTON' ||
         target.tagName === 'A' ||
         target.closest('button') ||
         target.closest('a') ||
         target.closest('[role="button"]') ||
-        target.dataset.hoverable
-      ) {
+        target.dataset?.hoverable === 'true'
+      );
+    };
+
+    const onMouseOver = (e) => {
+      if (isInteractive(e.target)) {
         setIsHovering(true);
+        playHUDBlip(880, 'sine', 0.05);
       }
     };
 
     const onMouseOut = (e) => {
-      const target = e.target;
-      if (
-        target.tagName === 'BUTTON' ||
-        target.tagName === 'A' ||
-        target.closest('button') ||
-        target.closest('a') ||
-        target.closest('[role="button"]') ||
-        target.dataset.hoverable
-      ) {
+      if (isInteractive(e.target)) {
         setIsHovering(false);
+      }
+    };
+
+    const onClick = (e) => {
+      if (isInteractive(e.target)) {
+        playHUDBlip(440, 'triangle', 0.1);
       }
     };
 
     window.addEventListener('mousemove', onMouseMove, { passive: true });
     document.addEventListener('mouseover', onMouseOver, { passive: true });
     document.addEventListener('mouseout', onMouseOut, { passive: true });
+    document.addEventListener('click', onClick, { passive: true });
 
     const animate = () => {
       currentPos.current.x += (mousePos.current.x - currentPos.current.x) * LERP_FACTOR;
@@ -72,6 +73,7 @@ function CustomCursor() {
       window.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseover', onMouseOver);
       document.removeEventListener('mouseout', onMouseOut);
+      document.removeEventListener('click', onClick);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, [isTouch]);

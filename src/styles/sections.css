@@ -4,7 +4,7 @@
 
 .section-launch {
   position: relative;
-  height: 300vh;
+  height: 100vh;
   background: var(--void);
   border: none;
 }
@@ -287,8 +287,10 @@
 /* === SECTION 2 — THE VOID === */
 .section-void {
   position: relative;
-  /* height defined by ScrollTrigger pin length */
-  background: #03050a;
+  height: 100vh;
+  background: var(--void);
+  border: none;
+  overflow: hidden;
 }
 
 .void-scene {
@@ -395,13 +397,14 @@
 
 .milestone-card {
   position: relative;
-  padding: var(--space-md) var(--space-lg);
-  border-left: 2px solid var(--hud-dim);
-  max-width: 280px;
-  clip-path: inset(0 0 0 0);
-  transition: all var(--duration-normal) var(--ease-out-expo);
-  max-height: 44px;
+  background: rgba(0, 255, 136, 0.03);
+  border: 1px solid rgba(0, 255, 136, 0.15);
+  padding: 12px var(--space-lg);
+  backdrop-filter: blur(4px);
+  transition: all 0.8s cubic-bezier(0.2, 1, 0.3, 1);
   overflow: hidden;
+  width: 280px;
+  clip-path: inset(0 0 0 0);
 }
 
 .milestone-card.revealed {
@@ -412,10 +415,9 @@
   clip-path: inset(0 100% 0 0);
 }
 
-.milestone-card:hover {
-  max-height: 140px;
-  border-left-color: var(--hud-green);
-  background: var(--hud-green-20);
+.milestone-card.active-log {
+  border-left: 2px solid var(--hud-green);
+  background: rgba(0, 255, 136, 0.08);
 }
 
 .milestone-day {
@@ -432,22 +434,15 @@
   color: var(--star-white);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  margin-bottom: var(--space-xs);
 }
 
 .milestone-log {
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 13px;
   color: var(--star-white-85);
   line-height: 1.5;
-  opacity: 0;
-  transform: translateY(6px);
-  transition: opacity 0.3s 0.1s, transform 0.3s 0.1s;
-}
-
-.milestone-card:hover .milestone-log {
-  opacity: 1;
-  transform: translateY(0);
+  transition: opacity 0.5s ease;
+  overflow: hidden;
 }
 
 .void-hud-panel {
@@ -468,9 +463,9 @@
 }
 
 .void-hud-panel.right {
-  bottom: 15%; /* Higher to avoid global mission bar */
+  bottom: 10%; 
   right: var(--space-xl);
-  min-width: 300px;
+  min-width: 320px;
 }
 
 .hud-corner-bracket {
@@ -538,10 +533,9 @@
 
 .void-milestones {
   position: absolute;
-  top: 50%;
+  top: 10%;
   right: var(--space-xl);
-  transform: translateY(-50%);
-  z-index: 105;
+  z-index: 120;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -590,19 +584,29 @@
 }
 
 
-/* === SECTION 2 — THE VOID === */
-.section-void {
-  position: relative;
-  height: 250vh;
-  background: var(--void);
-  border: none;
+.pulsing-orbit-line {
+  animation: orbit-pulse 1.5s ease-in-out infinite alternate, dash-move 30s linear infinite;
+  stroke-dasharray: 10 6;
 }
+
+@keyframes orbit-pulse {
+  from { opacity: 0.4; filter: drop-shadow(0 0 5px var(--hud-green)); }
+  to { opacity: 1; filter: drop-shadow(0 0 12px var(--hud-green)); }
+}
+
+@keyframes dash-move {
+  from { stroke-dashoffset: 600; }
+  to { stroke-dashoffset: 0; }
+}
+
+
 
 .section-orbit {
   position: relative;
   height: 100vh;
   background: var(--void);
   border: none;
+  overflow: hidden;
 }
 
 .orbit-canvas {
@@ -616,8 +620,12 @@
   left: var(--space-xl);
   top: 50%;
   transform: translateY(-50%);
+  width: 380px;
   z-index: var(--z-content);
-  max-width: 320px;
+  background: rgba(10, 14, 23, 0.4);
+  backdrop-filter: blur(8px);
+  padding: var(--space-xl);
+  border: 1px solid var(--hud-dim);
 }
 
 .orbit-hud h2 {
@@ -1666,4 +1674,39 @@
 @keyframes kick {
   0% { transform: translateY(0); }
   100% { transform: translateY(-5px); }
+}
+
+/* === FINAL RESPONSIVE OVERRIDES === */
+@media (max-width: 768px) {
+  :root { --space-xl: 16px; --space-lg: 12px; }
+  .launch-briefing h1 { font-size: 2rem !important; }
+  .void-hud-panel.left { top: 60px; left: 10px; right: 10px; max-width: none; background: rgba(10, 14, 23, 0.9); }
+  .void-hud-panel.right { bottom: 85px; left: 10px; right: 10px; min-width: 0; max-width: none; transform: none; }
+  .void-milestones { top: 32%; left: 10px; right: 10px; width: auto; align-items: center; }
+  .milestone-card { width: 100%; max-width: 320px; padding: var(--space-md); }
+  .orbit-hud { top: 60px !important; left: 10px !important; right: 10px !important; width: auto !important; transform: none !important; padding: var(--space-md) !important; background: rgba(10, 14, 23, 0.8) !important; }
+  .phase-stepper { top: 70px; scale: 0.85; }
+  .edl-nav { bottom: 20px; width: 96%; left: 2%; }
+  .surface-narrative { bottom: 80px; left: 10px; right: 10px; max-width: none; }
+  #cursor { display: none !important; }
+  .audio-toggle-btn { bottom: 70px; right: 20px; scale: 0.9; }
+}
+
+/* === EDL Landing Animations === */
+.edl-phase-svg {
+  width: 100%;
+  height: 200px;
+  display: block;
+  margin: 0 auto var(--space-lg);
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.15));
+}
+
+.parachute-swing {
+  animation: parachute-swing-anim 4s ease-in-out infinite alternate;
+  transform-origin: top center;
+}
+
+@keyframes parachute-swing-anim {
+  0% { transform: rotate(-8deg); }
+  100% { transform: rotate(8deg); }
 }

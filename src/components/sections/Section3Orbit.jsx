@@ -19,24 +19,13 @@ const STAR_COUNT = 1200;
 
 
 
+import { useTexture } from '@react-three/drei';
+
 /** Rotating Mars mesh with atmosphere shimmer */
 function MarsMesh() {
   const meshRef = useRef();
-  const [texture, setTexture] = useState(null);
-
-  useEffect(() => {
-    const loader = new THREE.TextureLoader();
-    loader.setCrossOrigin('anonymous');
-    loader.load(
-      MARS_TEXTURE_URL,
-      (tex) => {
-        tex.colorSpace = THREE.SRGBColorSpace;
-        setTexture(tex);
-      },
-      undefined,
-      (err) => console.warn('Mars texture failed to load, falling back to rust color.', err)
-    );
-  }, []);
+  
+  const texture = useTexture(MARS_TEXTURE_URL);
 
   useFrame(() => {
     if (meshRef.current) {
@@ -49,31 +38,36 @@ function MarsMesh() {
       <mesh ref={meshRef}>
         <sphereGeometry args={[MARS_RADIUS, 64, 64]} />
         {texture ? (
-          <meshStandardMaterial map={texture} roughness={0.85} />
+          <meshStandardMaterial 
+            map={texture} 
+            roughness={0.8} 
+            metalness={0.1}
+            emissive="#4a1a0a"
+            emissiveIntensity={0.1}
+          />
         ) : (
           <meshStandardMaterial color="#c1440e" roughness={0.9} />
         )}
       </mesh>
       {/* Atmosphere shimmer — outer */}
       <mesh>
-        <sphereGeometry args={[ATMOSPHERE_RADIUS, 32, 32]} />
+        <sphereGeometry args={[ATMOSPHERE_RADIUS + 0.05, 64, 64]} />
         <meshBasicMaterial
           color="#c1440e"
           transparent
-          opacity={0.14}
+          opacity={0.15}
           blending={THREE.AdditiveBlending}
           side={THREE.BackSide}
         />
       </mesh>
       {/* Atmosphere — inner bright limb */}
       <mesh>
-        <sphereGeometry args={[2.03, 32, 32]} />
+        <sphereGeometry args={[MARS_RADIUS + 0.02, 64, 64]} />
         <meshBasicMaterial
           color="#ff7f50"
           transparent
-          opacity={0.08}
+          opacity={0.1}
           blending={THREE.AdditiveBlending}
-          side={THREE.BackSide}
         />
       </mesh>
     </group>
@@ -109,19 +103,15 @@ function OrbitStars() {
   );
 }
 
-function Section3Orbit({ active, showModal }) {
+function Section3Orbit({ active }) {
   const { isMobile } = useDeviceDetect();
   const sectionRef = useRef(null);
   const [selectedZone, setSelectedZone] = useState(null);
   const [marsCoords, setMarsCoords] = useState({ lat: 0, lng: 0, visible: false, x: 0, y: 0 });
-  const [orbitalDrawn, setOrbitalDrawn] = useState(false);
-
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setOrbitalDrawn(true);
-        }
+      () => {
+        // Observer logic if needed, currently empty to resolve unused var
       },
       { threshold: 0.3 }
     );
@@ -197,12 +187,13 @@ function Section3Orbit({ active, showModal }) {
           rx="180"
           ry="60"
           fill="none"
-          stroke="var(--hud-dim)"
-          strokeWidth="1"
-          strokeDasharray="8 4"
-          strokeDashoffset={orbitalDrawn ? 0 : 600}
+          stroke="var(--hud-green)"
+          strokeWidth="1.5"
+          strokeDasharray="10 6"
+          className="pulsing-orbit-line"
           style={{
             transition: 'stroke-dashoffset 2s ease-out',
+            filter: 'drop-shadow(0 0 5px var(--hud-green))'
           }}
         />
       </svg>

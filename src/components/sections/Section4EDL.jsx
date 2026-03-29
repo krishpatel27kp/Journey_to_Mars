@@ -5,7 +5,7 @@
  * phase-specific data line.
  * @module Section4EDL
  */
-import React, { memo, useState, useCallback, useRef, useMemo } from 'react';
+import React, { memo, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -111,7 +111,7 @@ const PHASE_SVGS = [HeatshieldSVG, ParachuteSVG, RocketSVG, SkyCraneSVG];
 /** Atmospheric ionization particles for EDL background */
 function PlasmaParticles({ count = 100 }) {
   const pointsRef = useRef();
-  const positions = useMemo(() => {
+  const [positions] = useState(() => {
     const arr = new Float32Array(count * 3);
     for (let i = 0; i < count * 3; i += 3) {
       arr[i] = (Math.random() - 0.5) * 10;
@@ -119,11 +119,10 @@ function PlasmaParticles({ count = 100 }) {
       arr[i + 2] = (Math.random() - 0.5) * 10 - 5;
     }
     return arr;
-  }, [count]);
+  });
 
-  useFrame((state) => {
+  useFrame(() => {
     if (!pointsRef.current) return;
-    const t = state.clock.elapsedTime;
     pointsRef.current.position.y -= 0.05;
     if (pointsRef.current.position.y < -5) pointsRef.current.position.y = 5;
     pointsRef.current.rotation.z += 0.001;
@@ -142,7 +141,7 @@ function PlasmaParticles({ count = 100 }) {
 /**
  * Section4EDL — Full EDL interactive section.
  */
-function Section4EDL({ active, showModal }) {
+function Section4EDL({ active }) {
   const [activePhase, setActivePhase] = useState(0);
   const [direction, setDirection] = useState(1);
   const [flippedCards, setFlippedCards] = useState({});
